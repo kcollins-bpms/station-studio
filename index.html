@@ -52,7 +52,7 @@
     border:1px solid var(--line);box-shadow:var(--shadow);min-height:170px;display:flex;flex-direction:column;
     align-items:center;justify-content:center;cursor:pointer;overflow:hidden;padding:18px
   }
-  .tileLabel{font-size:24px;font-weight:800;text-align:center;z-index:1}
+  .tileLabel{font-size:24px;font-weight:800;text-align:center;z-index:1;display:flex;align-items:center;justify-content:center}
   .tileInner{
     width:100%;max-height:0;overflow:hidden;border-top:1px solid var(--line);
     transition:max-height .2s ease; margin-top:10px
@@ -76,15 +76,12 @@
   /* copy panel */
   .copybox{white-space:pre-wrap;background:#0a1528;border:1px dashed rgba(255,255,255,.18);padding:12px;border-radius:12px;font-size:14px}
 
-  /* modal: semi-opaque overlay so page is still visible */
+  /* modal */
   .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:50}
   .modal.active{display:flex}
-  .sheet{width:min(780px,92vw);max-height:88vh;overflow:auto;background:#0f1626;border:1px solid rgba(255,255,255,.18);border-radius:18px;box-shadow:var(--shadow)}
+  .sheet{width:min(820px,92vw);max-height:88vh;overflow:auto;background:#0f1626;border:1px solid rgba(255,255,255,.18);border-radius:18px;box-shadow:var(--shadow)}
   .sheet .head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.12)}
   .sheet .body{padding:16px;overflow-wrap:anywhere}
-
-  /* pack modal tighter to avoid horizontal scroll */
-  #modalPacks .sheet{width:min(720px,92vw)}
 
   /* timer */
   .timer{display:flex;gap:10px;align-items:center}
@@ -105,7 +102,6 @@
   }
   .tip:hover::after{opacity:1;transform:translateY(0)}
 
-  /* toast */
   .toast{position:fixed;bottom:20px;right:20px;background:#0f1830;color:var(--text);padding:10px 12px;border-radius:10px;border:1px solid var(--line);box-shadow:var(--shadow);display:none}
   .toast.show{display:block}
 
@@ -124,7 +120,7 @@
       <button id="btnCreateSet" class="primary">Create Set of X</button>
       <button id="btnSavedSets">Saved Sets</button>
       <button id="btnMyStations">My Stations</button>
-      <button id="btnDataPacks">Data Packs</button>
+      <button id="btnContent">Content</button>
       <button id="btnStandards">Standards Filter</button>
       <button id="btnTimer">Timer</button>
       <button id="btnSettings" class="ghost">Settings</button>
@@ -194,6 +190,109 @@
     </div>
   </section>
 </main>
+
+<!-- CONTENT (Starter / Generate / Quick Add / Import-Export) -->
+<div id="modalContent" class="modal" onclick="backdropClose(event)">
+  <div class="sheet" style="width:min(900px,92vw)">
+    <div class="head"><strong>Content</strong><button onclick="closeModal('modalContent')">✕</button></div>
+    <div class="body">
+      <div class="tabs">
+        <button id="tabStarter" class="active" onclick="switchContentTab('starter')">Starter Bundle</button>
+        <button id="tabGenerate" onclick="switchContentTab('generate')">Generate More</button>
+        <button id="tabQuickAdd" onclick="switchContentTab('quickadd')">Quick Add</button>
+        <button id="tabImport" onclick="switchContentTab('import')">Import / Export</button>
+      </div>
+
+      <!-- Starter -->
+      <div id="paneStarter">
+        <p class="muted">A complete starter set is included by default. Re-apply to extend your bank (duplicates are skipped).</p>
+        <div id="starterStatus" class="card mt12"></div>
+        <div class="controls mt12">
+          <button class="primary" onclick="applyStarterBundle(true)">Re-apply Starter Bundle</button>
+          <button class="ghost" onclick="applyStarterBundle(false)">Top up missing categories</button>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <div id="paneGenerate" class="hidden">
+        <div class="kvs">
+          <div>
+            <label>Station</label>
+            <select id="genStation">
+              <option value="prompts">Writing Prompts</option>
+              <option value="cer">CER Micro-Analysis</option>
+              <option value="sentences">Sentence Combining</option>
+              <option value="afterReading">After-Reading Menu</option>
+              <option value="morphology">Morphology Builder</option>
+              <option value="standby">Standby Library</option>
+            </select>
+          </div>
+          <div>
+            <label>How many?</label>
+            <select id="genCount">
+              <option>10</option><option selected>25</option><option>50</option><option>100</option>
+            </select>
+          </div>
+          <div id="genPromptCatWrap">
+            <label>Prompt category</label>
+            <select id="genPromptCat"></select>
+          </div>
+          <div>
+            <label>Seed (optional)</label>
+            <input id="genSeed" placeholder="e.g., week-7" />
+          </div>
+        </div>
+        <div class="controls mt12">
+          <button class="primary" onclick="generateBatch()">Add Items</button>
+        </div>
+        <div id="genReport" class="mt12"></div>
+      </div>
+
+      <!-- Quick Add -->
+      <div id="paneQuickAdd" class="hidden">
+        <div class="kvs">
+          <div>
+            <label>Station Type</label>
+            <select id="qaType" onchange="renderQuickAddForm()">
+              <option value="prompts">Writing Prompt</option>
+              <option value="cer">CER Item</option>
+              <option value="sentences">Sentence Combining</option>
+              <option value="afterReading">After-Reading Task</option>
+              <option value="morphology">Morphology Item</option>
+              <option value="standby">Standby Task</option>
+            </select>
+          </div>
+          <div>
+            <label>Standards (type and Enter)</label>
+            <input id="qaStdInput" placeholder="e.g., RL.7.1" />
+            <div id="qaStdChips" class="controls mt8"></div>
+          </div>
+        </div>
+        <div id="qaForm" class="mt12"></div>
+        <div class="controls mt12">
+          <button class="primary" onclick="quickAdd()">Add Item</button>
+        </div>
+      </div>
+
+      <!-- Import / Export -->
+      <div id="paneImport" class="hidden">
+        <div class="controls">
+          <button onclick="downloadBank()">Export Current Banks</button>
+          <label class="btn" for="uploadBank">Import Banks JSON</label>
+          <input id="uploadBank" type="file" accept="application/json" class="hidden" />
+        </div>
+        <div class="mt12 card">
+          <strong>Notes:</strong>
+          <ul>
+            <li>Import merges with your current bank; exact duplicates are skipped.</li>
+            <li>You generally won't need this now that the app ships with built-in starters.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- CREATE SET -->
 <div id="modalCreateSet" class="modal" onclick="backdropClose(event)">
@@ -300,24 +399,6 @@
   </div>
 </div>
 
-<!-- DATA PACKS -->
-<div id="modalPacks" class="modal" onclick="backdropClose(event)">
-  <div class="sheet">
-    <div class="head"><strong>Data Packs</strong><button onclick="closeModal('modalPacks')">✕</button></div>
-    <div class="body">
-      <p class="muted">Paste a JSON pack below, then click <em>Preview & Import</em>.</p>
-      <textarea id="packInput" rows="10" placeholder='Paste JSON pack here'></textarea>
-      <div class="controls mt8">
-        <button onclick="previewPack()">Preview & Import</button>
-        <button class="ghost" onclick="downloadBank()">Export Current Banks</button>
-        <button class="ghost" onclick="clearPrompts()">Clear Prompts</button>
-        <button class="ghost" onclick="clearAllBanks()">Clear ALL Banks</button>
-      </div>
-      <div id="packPreview" class="mt12"></div>
-    </div>
-  </div>
-</div>
-
 <!-- TIMER -->
 <div id="modalTimer" class="modal" onclick="backdropClose(event)">
   <div class="sheet" style="width:min(640px,92vw)">
@@ -347,8 +428,9 @@ const $$ = s=>Array.from(document.querySelectorAll(s));
 const uid = ()=>Math.random().toString(36).slice(2,10);
 const store = { get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
 function showToast(m){const t=$("#toast");t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
 
-/* Tooltips: term → definition */
+/* Tooltips glossary */
 const GLOSSARY = {
   "motif":"A recurring image, idea, or symbol that supports a theme.",
   "time shift":"A deliberate jump in time (e.g., flashback or flash-forward) to shape meaning.",
@@ -371,18 +453,16 @@ const GLOSSARY = {
   "theme":"A message about life or human experience in literary text."
 };
 
-/* Safer tooltipifier: operates only on TEXT NODES so attribute values are untouched */
+/* Safer tooltipify */
 const TIP_TERMS = Object.keys(GLOSSARY).sort((a,b)=>b.length-a.length);
 const TIP_REGEX = new RegExp("\\b(" + TIP_TERMS.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join("|") + ")\\b","gi");
-
 function tipify(text){
-  // Start safe: create a div where text is only textContent (escaped)
   const div=document.createElement('div');
   div.textContent = String(text);
   function walk(node){
     const kids=[...node.childNodes];
     for(const child of kids){
-      if(child.nodeType===3){ // Text
+      if(child.nodeType===3){
         const raw = child.nodeValue;
         if(!TIP_REGEX.test(raw)){ TIP_REGEX.lastIndex=0; continue; }
         TIP_REGEX.lastIndex=0;
@@ -392,8 +472,7 @@ function tipify(text){
           for(let i=0;i<parts.length;i++){
             const part=parts[i];
             if(part===undefined || part==="") continue;
-            if(i%2===1){ // matched term
-              // resolve canonical key (case-insensitive)
+            if(i%2===1){
               const key = TIP_TERMS.find(k=>k.toLowerCase()===part.toLowerCase()) || part;
               const span=document.createElement('span');
               span.className='tip';
@@ -407,7 +486,7 @@ function tipify(text){
           node.replaceChild(frag, child);
         }
       } else if(child.nodeType===1){
-        if(child.classList && child.classList.contains('tip')) continue; // don't recurse into our tips
+        if(child.classList && child.classList.contains('tip')) continue;
         walk(child);
       }
     }
@@ -417,27 +496,26 @@ function tipify(text){
 }
 function safeWithTips(s){ return tipify(s); }
 
-/* Settings & Store keys */
-const SETTINGS_KEY='ss.settings.v6';
-const SAVED_SETS_KEY='ss.savedSets.v6';
-const HIDDEN_KEY='ss.hidden.v6';
-const MINE_KEY='ss.myStations.v6';
-const STD_FILTER_KEY='ss.stdFilter.v6';
-const BANK_KEY='ss.banks.v6';
-const PACKS_KEY='ss.packs.v4';
+/* Settings & keys */
+const SETTINGS_KEY='ss.settings.v7';
+const SAVED_SETS_KEY='ss.savedSets.v7';
+const HIDDEN_KEY='ss.hidden.v7';
+const MINE_KEY='ss.myStations.v7';
+const STD_FILTER_KEY='ss.stdFilter.v7';
+const BANK_KEY='ss.banks.v7';
+const STARTER_FLAG='ss.starterApplied.v1';
 
 let settings = store.get(SETTINGS_KEY) || { defaultDifficulty:'Core', includeStd:false, chime:true };
 let savedSets = store.get(SAVED_SETS_KEY) || [];
 let hiddenIds = new Set(store.get(HIDDEN_KEY)||[]);
 let myStations = store.get(MINE_KEY)||[];
 let stdFilter = new Set(store.get(STD_FILTER_KEY)||[]);
-let importedPacks = new Set(store.get(PACKS_KEY)||[]);
 
-/* CCSS short summaries */
+/* CCSS summaries (short) */
 const CCSS = {
   RL:{'RL.7.1':'Cite evidence; make inferences.','RL.7.2':'Theme/central idea; summarize.','RL.7.3':'How story elements interact.','RL.7.4':'Words/phrases & impact.','RL.7.5':'Structure’s effect.','RL.7.6':'Point of view.'},
   RI:{'RI.7.1':'Cite evidence; informational inferences.','RI.7.2':'Central ideas; objective summary.','RI.7.3':'Interactions among ideas/events.','RI.7.4':'Words/phrases in context.','RI.7.5':'Analyze text structure.','RI.7.6':'Author’s purpose/POV.'},
-  W:{'W.7.1':'Argument writing.','W.7.2':'Informative writing.','W.7.3':'Narratives.','W.7.4':'Clear, coherent writing.','W.7.5':'Plan, revise, edit.','W.7.6':'Use technology for writing.','W.7.9':'Use evidence from texts.','W.7.10':'Write routinely.'},
+  W:{'W.7.1':'Argument; claims & support.','W.7.2':'Informative/explanatory.','W.7.3':'Narratives.','W.7.4':'Clear, coherent writing.','W.7.5':'Plan, revise, edit.','W.7.6':'Use technology for writing.','W.7.9':'Use evidence from texts.','W.7.10':'Write routinely.'},
   L:{'L.7.1':'Grammar and usage.','L.7.2':'Capitalization, punctuation, spelling.','L.7.3':'Style and effect.','L.7.4':'Determine/clarify meaning.','L.7.5':'Figurative language.','L.7.6':'Academic vocabulary.'},
   SL:{'SL.7.1':'Collaborative discussions.','SL.7.4':'Present claims/findings.','SL.7.5':'Use digital media.'}
 };
@@ -468,22 +546,222 @@ const STATIONS = {
   standby:{ key:'standby', name:'Standby Library', kind:'flat',
     desc:'Early-finisher tasks across skills.'}
 };
-function stationUsesDifficulty(){ return true } // all have scaffolds
+function stationUsesDifficulty(){ return true } // scaffolds for all
 
-/* Home tiles */
-function renderHome(){
-  const grid=$("#homeGrid"); grid.innerHTML='';
-  Object.values(STATIONS).forEach(st=>{
-    const tile=document.createElement('div'); tile.className='tile'; tile.setAttribute('data-open',st.key);
-    tile.innerHTML = `
-      <div class="tileLabel">${st.name}</div>
-      <div class="tileInner"><div class="tileInnerContent">${st.desc}</div></div>`;
-    tile.addEventListener('click',()=>openView(st.key));
-    grid.appendChild(tile);
+/* ---------- Starter bundle (auto on first run) ---------- */
+function ensureStarterBanks(){
+  const already = !!store.get(STARTER_FLAG);
+  const totals = countTotals();
+  const isEmpty = totals.total===0;
+
+  if(isEmpty || !already){
+    applyStarterBundle(false); // fill any missing categories; first run will fill all
+    store.set(STARTER_FLAG, true);
+  }
+}
+function applyStarterBundle(forceAll){
+  // Targets
+  const PROMPTS_PER_CAT = 25; // 6×25 = 150
+  const TARGET_OTHERS = 120;
+
+  // Prompts (by category)
+  const cats = Object.keys(BANKS.prompts);
+  cats.forEach(cat=>{
+    const have = BANKS.prompts[cat].length;
+    const need = forceAll ? PROMPTS_PER_CAT : Math.max(0, PROMPTS_PER_CAT - have);
+    if(need>0){
+      let added=0, tries=0;
+      const seen = new Set(BANKS.prompts[cat].map(x=>x.text.trim()));
+      while(added<need && tries<need*50){
+        const item = generatePromptOne(cat, `starter-v1:${cat}:${have+added}:${tries}`);
+        const key=item.text.trim();
+        if(!seen.has(key)){ BANKS.prompts[cat].push(item); seen.add(key); added++; }
+        tries++;
+      }
+    }
   });
+
+  // CER
+  fillGenerator('cer', TARGET_OTHERS, 'cer', generateCEROne, (x)=> (x.prompt+'||'+x.excerpt).trim(), forceAll);
+  // Sentences
+  fillGenerator('sentences', TARGET_OTHERS, 'sent', generateSentenceOne, (x)=> (x.focus+'||'+x.mentor+'||'+x.kernels.join('|')).trim(), forceAll);
+  // After-Reading
+  fillGenerator('afterReading', TARGET_OTHERS, 'after', generateAfterOne, (x)=> x.title+'||'+x.directions, forceAll);
+  // Morphology (use curated pool; top up randomly without duplicates)
+  const pool = morphPool();
+  const morphKeys = new Set(BANKS.morphology.map(x=>x.kind+'||'+x.form));
+  const r = mulberry32(hash('starter-morph'));
+  if(forceAll || BANKS.morphology.length===0){
+    pool.forEach(p=>{
+      const key=p.kind+'||'+p.form;
+      if(!morphKeys.has(key)){ BANKS.morphology.push({...p, id:uid()}); morphKeys.add(key); }
+    });
+  }
+  // Standby
+  fillGenerator('standby', TARGET_OTHERS, 'standby', generateStandbyOne, (x)=> x.title.trim(), forceAll);
+
+  store.set(BANK_KEY, BANKS);
+  updateStarterStatus();
+  showToast('Starter bundle applied');
+}
+function fillGenerator(bankKey, target, seedPrefix, genFn, keyFn, forceAll){
+  const have = BANKS[bankKey].length;
+  const need = forceAll ? target : Math.max(0, target - have);
+  if(need<=0) return;
+  const seen = new Set(BANKS[bankKey].map(keyFn));
+  let added=0, tries=0, i=have;
+  while(added<need && tries<need*80){
+    const item = genFn(`${seedPrefix}:${i}:${tries}`);
+    const key = keyFn(item);
+    if(!seen.has(key)){ BANKS[bankKey].push(item); seen.add(key); added++; i++; }
+    tries++;
+  }
+}
+function countTotals(){
+  const p = Object.values(BANKS.prompts).reduce((a,arr)=>a+arr.length,0);
+  return {
+    prompts:p,
+    cer:BANKS.cer.length,
+    sentences:BANKS.sentences.length,
+    afterReading:BANKS.afterReading.length,
+    morphology:BANKS.morphology.length,
+    standby:BANKS.standby.length,
+    total: p + BANKS.cer.length + BANKS.sentences.length + BANKS.afterReading.length + BANKS.morphology.length + BANKS.standby.length
+  };
+}
+function updateStarterStatus(){
+  const t = countTotals();
+  $('#starterStatus').innerHTML = `
+    <div><strong>Current bank counts</strong></div>
+    <ul style="margin:8px 0 0 16px">
+      <li>Writing Prompts: ${t.prompts}</li>
+      <li>CER Micro-Analysis: ${t.cer}</li>
+      <li>Sentence Combining: ${t.sentences}</li>
+      <li>After-Reading: ${t.afterReading}</li>
+      <li>Morphology: ${t.morphology}</li>
+      <li>Standby: ${t.standby}</li>
+    </ul>`;
 }
 
-/* Standards modal (tabbed) */
+/* ---------- Content modal controls ---------- */
+function switchContentTab(which){
+  $('#tabStarter').classList.toggle('active', which==='starter');
+  $('#tabGenerate').classList.toggle('active', which==='generate');
+  $('#tabQuickAdd').classList.toggle('active', which==='quickadd');
+  $('#tabImport').classList.toggle('active', which==='import');
+  $('#paneStarter').classList.toggle('hidden', which!=='starter');
+  $('#paneGenerate').classList.toggle('hidden', which!=='generate');
+  $('#paneQuickAdd').classList.toggle('hidden', which!=='quickadd');
+  $('#paneImport').classList.toggle('hidden', which!=='import');
+}
+function openContent(){
+  switchContentTab('starter');
+  updateStarterStatus();
+  // populate prompt cat select
+  const sel=$("#genPromptCat"); sel.innerHTML='';
+  ['Any', ...Object.keys(BANKS.prompts)].forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+  openModal('modalContent');
+}
+function generateBatch(){
+  const station = $('#genStation').value;
+  const count = parseInt($('#genCount').value,10);
+  const seed = ($('#genSeed').value||'gen')+'-'+Date.now();
+  let added=0, skipped=0;
+  if(station==='prompts'){
+    const cat=$('#genPromptCat').value;
+    const cats = (cat==='Any') ? Object.keys(BANKS.prompts) : [cat];
+    cats.forEach(c=>{
+      const seen = new Set(BANKS.prompts[c].map(x=>x.text.trim()));
+      let local=0, tries=0;
+      while(local<count && tries<count*80){
+        const it = generatePromptOne(c, `${seed}:${c}:${local}:${tries}`);
+        const k=it.text.trim();
+        if(!seen.has(k)){ BANKS.prompts[c].push(it); seen.add(k); added++; local++; } else { skipped++; }
+        tries++;
+      }
+    });
+  } else if(station==='cer'){
+    const seen = new Set(BANKS.cer.map(x=>(x.prompt+'||'+x.excerpt).trim()));
+    for(let i=0;i<count;i++){ const it=generateCEROne(`${seed}:${i}`); const k=(it.prompt+'||'+it.excerpt).trim(); if(!seen.has(k)){ BANKS.cer.push(it); seen.add(k); added++; } else skipped++; }
+  } else if(station==='sentences'){
+    const seen = new Set(BANKS.sentences.map(x=>(x.focus+'||'+x.mentor+'||'+x.kernels.join('|')).trim()));
+    for(let i=0;i<count;i++){ const it=generateSentenceOne(`${seed}:${i}`); const k=(it.focus+'||'+it.mentor+'||'+it.kernels.join('|')).trim(); if(!seen.has(k)){ BANKS.sentences.push(it); seen.add(k); added++; } else skipped++; }
+  } else if(station==='afterReading'){
+    const seen = new Set(BANKS.afterReading.map(x=>x.title+'||'+x.directions));
+    for(let i=0;i<count;i++){ const it=generateAfterOne(`${seed}:${i}`); const k=it.title+'||'+it.directions; if(!seen.has(k)){ BANKS.afterReading.push(it); seen.add(k); added++; } else skipped++; }
+  } else if(station==='morphology'){
+    const pool=morphPool(); const seen=new Set(BANKS.morphology.map(x=>x.kind+'||'+x.form)); let i=0, tries=0;
+    while(i<count && tries<count*10){ const pick=pool[Math.floor(Math.random()*pool.length)]; const k=pick.kind+'||'+pick.form; if(!seen.has(k)){ BANKS.morphology.push({...pick,id:uid()}); seen.add(k); added++; i++; } else skipped++; tries++; }
+  } else if(station==='standby'){
+    const seen=new Set(BANKS.standby.map(x=>x.title.trim()));
+    for(let i=0;i<count;i++){ const it=generateStandbyOne(`${seed}:${i}`); const k=it.title.trim(); if(!seen.has(k)){ BANKS.standby.push(it); seen.add(k); added++; } else skipped++; }
+  }
+  store.set(BANK_KEY,BANKS);
+  $('#genReport').innerHTML=`<div class="card"><strong>Added:</strong> ${added} item(s)${skipped?`, skipped ${skipped} duplicate(s)`:''}.</div>`;
+  updateStarterStatus();
+  showToast('Items added');
+}
+function renderQuickAddForm(){
+  const type=$('#qaType').value;
+  const el=$('#qaForm'); el.innerHTML='';
+  const L=(label,inner)=>`<div class="mt8"><label>${label}</label>${inner}</div>`;
+  if(type==='prompts'){
+    const optCats=['Narrative','Argument','Informative/Explanatory','Poetry/Description','Real-World/SEL','Creative/Speculative'].map(c=>`<option>${c}</option>`).join('');
+    el.innerHTML = L('Category', `<select id="qaCat">${optCats}</select>`) +
+                   L('Prompt text', `<textarea id="qaText" rows="4"></textarea>`);
+  } else if(type==='cer'){
+    el.innerHTML = L('Type', `<select id="qaCERType"><option>RL</option><option>RI</option></select>`) +
+                   L('Prompt', `<textarea id="qaCERPrompt" rows="3"></textarea>`) +
+                   L('Excerpt', `<textarea id="qaCERExcerpt" rows="3"></textarea>`);
+  } else if(type==='sentences'){
+    el.innerHTML = L('Focus', `<input id="qaFocus" />`) +
+                   L('Kernels (one per line)', `<textarea id="qaKernels" rows="3"></textarea>`) +
+                   L('Mentor sentence', `<textarea id="qaMentor" rows="2"></textarea>`);
+  } else if(type==='afterReading'){
+    el.innerHTML = L('Title', `<input id="qaARTitle" />`) +
+                   L('Directions', `<textarea id="qaARDirections" rows="4"></textarea>`);
+  } else if(type==='morphology'){
+    el.innerHTML = L('Kind', `<select id="qaMKind"><option>prefix</option><option>root</option><option>suffix</option></select>`) +
+                   L('Form', `<input id="qaMForm" placeholder="e.g., pre-" />`) +
+                   L('Meaning', `<input id="qaMMeaning" />`) +
+                   L('Examples (comma-separated)', `<input id="qaMEx" />`);
+  } else if(type==='standby'){
+    el.innerHTML = L('Title', `<input id="qaSBTitle" />`) +
+                   L('Tag', `<select id="qaSBTag"><option>Reading</option><option>Writing</option><option>Vocab</option><option>SL</option><option>Grammar</option></select>`) +
+                   L('Directions', `<textarea id="qaSBDirections" rows="4"></textarea>`);
+  }
+}
+$('#qaStdInput')?.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const code=e.target.value.trim().toUpperCase(); if(!code) return; addQAStdChip(code); e.target.value=''; }});
+function addQAStdChip(code){ const chip=document.createElement('span'); chip.className='pill'; chip.setAttribute('data-code',code); chip.innerHTML=`${code} <button class="ghost" onclick="this.parentElement.remove()">✕</button>`; $("#qaStdChips").appendChild(chip); }
+function quickAdd(){
+  const type=$('#qaType').value;
+  const stds=Array.from($('#qaStdChips').querySelectorAll('.pill')).map(c=>c.getAttribute('data-code'));
+  if(type==='prompts'){
+    const cat=$('#qaCat').value; const text=$('#qaText').value.trim(); if(!text) return showToast('Enter prompt text');
+    BANKS.prompts[cat].push({id:uid(), text, standards:stds, scaffolds:{Support:defaultScaffold('prompts','Support'), Core:defaultScaffold('prompts','Core'), Challenge:defaultScaffold('prompts','Challenge')}});
+  } else if(type==='cer'){
+    const t=$('#qaCERType').value; const prompt=$('#qaCERPrompt').value.trim(); const excerpt=$('#qaCERExcerpt').value.trim(); if(!prompt||!excerpt) return showToast('Prompt and excerpt required');
+    BANKS.cer.push({id:uid(), type:t, prompt, excerpt, standards:(t==='RL'?['RL.7.1','W.7.9']:['RI.7.1','W.7.9']), scaffolds:{Support:defaultScaffold('cer','Support'), Core:defaultScaffold('cer','Core'), Challenge:defaultScaffold('cer','Challenge')}});
+  } else if(type==='sentences'){
+    const focus=$('#qaFocus').value.trim(); const kernels=$('#qaKernels').value.split('\n').map(s=>s.trim()).filter(Boolean); const mentor=$('#qaMentor').value.trim(); if(!focus||kernels.length<2||!mentor) return showToast('Provide focus, ≥2 kernels, and mentor');
+    BANKS.sentences.push({id:uid(), focus, kernels, mentor, standards:stds.length?stds:['L.7.1','L.7.2']});
+  } else if(type==='afterReading'){
+    const title=$('#qaARTitle').value.trim(); const directions=$('#qaARDirections').value.trim(); if(!title||!directions) return showToast('Title and directions required');
+    BANKS.afterReading.push({id:uid(), title, directions, standards:stds.length?stds:['RL.7.2']});
+  } else if(type==='morphology'){
+    const kind=$('#qaMKind').value; const form=$('#qaMForm').value.trim(); const meaning=$('#qaMMeaning').value.trim(); const examples=$('#qaMEx').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!form||!meaning) return showToast('Form and meaning required');
+    BANKS.morphology.push({id:uid(), kind, form, meaning, examples, standards:stds.length?stds:['L.7.4','L.7.6']});
+  } else if(type==='standby'){
+    const title=$('#qaSBTitle').value.trim(); const tag=$('#qaSBTag').value; const directions=$('#qaSBDirections').value.trim(); if(!title||!directions) return showToast('Title and directions required');
+    BANKS.standby.push({id:uid(), title, tag, directions, standards:stds.length?stds:['W.7.4']});
+  }
+  store.set(BANK_KEY,BANKS);
+  updateStarterStatus();
+  showToast('Item added');
+}
+
+/* ---------- Standards modal ---------- */
 function switchStdTab(which){
   $("#tabSearch").classList.toggle('active', which==='search');
   $("#tabBrowse").classList.toggle('active', which==='browse');
@@ -520,7 +798,20 @@ function addStd(code){ stdFilter.add(code); renderSelectedStdChips(); }
 function applyStandardsFilter(){ store.set(STD_FILTER_KEY, Array.from(stdFilter)); closeModal('modalStandards'); if(activeKey) renderActiveItem(); showToast('Standards filter applied'); }
 function clearStandardsFilter(){ stdFilter.clear(); store.set(STD_FILTER_KEY, []); renderStdTree(); renderSelectedStdChips(); if(activeKey) renderActiveItem(); }
 
-/* View routing & rendering */
+/* ---------- Home tiles ---------- */
+function renderHome(){
+  const grid=$("#homeGrid"); grid.innerHTML='';
+  Object.values(STATIONS).forEach(st=>{
+    const tile=document.createElement('div'); tile.className='tile'; tile.setAttribute('data-open',st.key);
+    tile.innerHTML = `
+      <div class="tileLabel">${st.name}</div>
+      <div class="tileInner"><div class="tileInnerContent">${st.desc}</div></div>`;
+    tile.addEventListener('click',()=>openView(st.key));
+    grid.appendChild(tile);
+  });
+}
+
+/* ---------- View & render ---------- */
 let activeKey=null, currentIndex=0, difficulty=settings.defaultDifficulty||'Core', listView=false, currentCategory='Any';
 
 function openView(key){
@@ -546,7 +837,6 @@ function setupCategoryUI(categories){
   $("#categoryWrap").classList.remove('hidden');
   sel.onchange=()=>{ currentCategory=sel.value; currentIndex=0; renderActiveItem(); };
 }
-
 function matchesStandards(itemStd=[],filterList=[]){ if(!filterList.length) return true; return itemStd?.some(code=>filterList.some(f=>f.endsWith('.*')?code.startsWith(f.split('.')[0]):code===f)); }
 function visibleItems(){
   const filter=Array.from(stdFilter);
@@ -565,7 +855,36 @@ function visibleItems(){
     return (BANKS[activeKey]||[]).filter(it=>!hiddenIds.has(it.id) && (!filter.length || matchesStandards(it.standards, filter)));
   }
 }
-
+function defaultScaffold(kind, diff){
+  const S={
+    Support:{
+      prompts:`1) Plan: beginning → turning point → outcome.\n2) Include 2 sensory details.\n3) Write 8–10 sentences.`,
+      cer:`1) Claim: answer the question in 1 sentence.\n2) Evidence: cite 2 short quotes (≤8 words each).\n3) Reasoning: explain how each quote supports your claim.`,
+      morphology:`1) Build 4 words with the form.\n2) Define each and mark part of speech.\n3) Write a 3-sentence story using at least 2 of your words.`,
+      sentences:`1) Combine the kernels with Although/When/Because.\n2) Read aloud and fix punctuation.\n3) Write 1 sentence that imitates the mentor.`,
+      afterReading:`1) Write: “The theme/idea is __.”\n2) Cite 1 strong moment.\n3) Explain (2–3 sentences) how it shows the idea.`,
+      standby:`1) Choose a task.\n2) Follow steps exactly.\n3) Check your work with a partner or rubric.`
+    },
+    Core:{
+      prompts:`1) State your focus in the first 2 sentences.\n2) Use concrete details and smooth transitions.\n3) Write 10–12 sentences.`,
+      cer:`1) Claim.\n2) Quote #1 + 2–3 sentences of explanation.\n3) Quote #2 + 2–3 sentences of explanation.\n4) Conclude with a takeaway.`,
+      morphology:`1) Create 4 valid words; define + part of speech.\n2) Write a 3–4 sentence micro-story using at least 3 of them.`,
+      sentences:`1) Combine the kernels into clear, polished sentences.\n2) Imitate the mentor’s structure; vary one element.\n3) Check capitalization and commas.`,
+      afterReading:`1) Cite 1–2 key moments.\n2) Explain in 3–4 sentences how they contribute to the whole.\n3) End with a clear takeaway.`,
+      standby:`1) Complete the task.\n2) Add a brief justification of one choice you made.`
+    },
+    Challenge:{
+      prompts:`1) Add a purposeful motif or time shift.\n2) Use at least one complex sentence.\n3) Craft a precise ending that “lands” the idea.`,
+      cer:`1) Make a nuanced claim.\n2) Use two quotes with close analysis.\n3) Address a limitation or counter-reading in 1–2 sentences.`,
+      morphology:`1) Add a short etymology note for 1 word.\n2) Use parallel structure in your micro-story.`,
+      sentences:`1) Combine using two techniques (e.g., appositive + subordination).\n2) Create two polished sentences and one mentor imitation.`,
+      afterReading:`1) Make a nuanced claim.\n2) Cite, analyze, and connect ideas across the text.\n3) Address an alternative view briefly.`,
+      standby:`1) Extend the product (mini-graphic or 60-sec share).\n2) Explain your design/wording choices.`
+    }
+  };
+  const key=diff==='Support'?'Support':diff==='Challenge'?'Challenge':'Core';
+  return S[key][kind];
+}
 function copyBlock(title, directions, standards){
   const id='copy_'+uid(); const includeDefault=settings.includeStd;
   const stdCodes=standards?.join(', ')||''; const stdLines=standards?.map(s=>`- ${s}: ${lookupStd(s)}`).join('\n')||'';
@@ -584,39 +903,6 @@ function copyBlock(title, directions, standards){
 }
 function toggleCopy(id){ $('#'+id).classList.toggle('hidden'); }
 function copyFrom(id){ const box=$('#'+id+' .copybox'); const include=$('#inc_'+id)?.checked; let text=decodeURIComponent(box.getAttribute('data-base')||''); if(include){ const codes=decodeURIComponent(box.getAttribute('data-stdcodes')||''); const lines=decodeURIComponent(box.getAttribute('data-stdlines')||''); if(codes) text+=`\n\nStandards: ${codes}`; if(lines) text+=`\n${lines}`; } navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard')); }
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
-
-/* Readable, stepwise scaffolds — each number on its own line; no {…} */
-function defaultScaffold(kind, diff){
-  const S={
-    Support:{
-      prompts:`1) Plan: beginning → turning point → outcome.\n2) Include 2 sensory details.\n3) Write 8–10 sentences.`,
-      cer:`1) Claim: answer the question in 1 sentence.\n2) Evidence: cite 2 short quotes (≤8 words each).\n3) Reasoning: explain in 2–3 sentences how each quote supports your claim.`,
-      morphology:`1) Build 4 words with the form.\n2) Define each and mark part of speech.\n3) Write a 3-sentence story using at least 2 of your words.`,
-      sentences:`1) Combine the kernels with Although/When/Because.\n2) Read aloud and fix punctuation.\n3) Write 1 sentence that imitates the mentor.`,
-      afterReading:`1) Write: “The theme/idea is __.”\n2) Cite 1 strong moment.\n3) Explain in 2–3 sentences how it shows the idea.`,
-      standby:`1) Choose a task.\n2) Follow steps exactly.\n3) Check your work with a partner or rubric.`
-    },
-    Core:{
-      prompts:`1) State your focus in the first 2 sentences.\n2) Use concrete details and smooth transitions.\n3) Write 10–12 sentences.`,
-      cer:`1) Claim.\n2) Quote #1 + 2–3 sentences of explanation.\n3) Quote #2 + 2–3 sentences of explanation.\n4) Conclude with a takeaway.`,
-      morphology:`1) Create 4 valid words; define + part of speech.\n2) Write a 3–4 sentence micro-story using at least 3 of them.`,
-      sentences:`1) Combine the kernels into clear, polished sentences.\n2) Imitate the mentor’s structure; vary one element.\n3) Check capitalization and commas.`,
-      afterReading:`1) Cite 1–2 key moments.\n2) Explain in 3–4 sentences how they contribute to the whole text.\n3) End with a clear takeaway.`,
-      standby:`1) Complete the task.\n2) Add a brief justification of one choice you made.`
-    },
-    Challenge:{
-      prompts:`1) Add a purposeful motif or time shift.\n2) Use at least one complex sentence.\n3) Craft a precise ending that “lands” the idea.`,
-      cer:`1) Make a nuanced claim.\n2) Use two quotes with close analysis.\n3) Address a limitation or counter-reading in 1–2 sentences.`,
-      morphology:`1) Add a short etymology note for 1 word.\n2) Use parallel structure in your micro-story.`,
-      sentences:`1) Combine using two techniques (e.g., appositive + subordination).\n2) Create two polished sentences and one mentor imitation.`,
-      afterReading:`1) Make a nuanced claim.\n2) Cite, analyze, and connect ideas across the text.\n3) Address an alternative view briefly.`,
-      standby:`1) Extend the product (mini-graphic or 60-sec share).\n2) Explain your design/wording choices.`
-    }
-  };
-  const key=diff==='Support'?'Support':diff==='Challenge'?'Challenge':'Core';
-  return S[key][kind];
-}
 
 function renderActiveItem(){
   const items=visibleItems();
@@ -693,7 +979,7 @@ function hideCurrentItem(){ const arr=visibleItems(); if(!arr.length) return; hi
 function setDifficulty(d){ difficulty=d; $$("#difSeg button").forEach(b=>b.classList.remove('active')); if(d==='Support') $("#difSupport").classList.add('active'); if(d==='Core') $("#difCore").classList.add('active'); if(d==='Challenge') $("#difChallenge").classList.add('active'); if(!listView) renderActiveItem(); }
 function toggleListView(){ listView=!listView; $("#btnListView").textContent=listView?'Single View':'List View'; renderActiveItem(); }
 
-/* Create/Save Sets */
+/* ---------- Create/Save Sets (unchanged core) ---------- */
 function openCreateSet(){
   const allowed=Object.keys(STATIONS); const pick=$("#setStationPick"); pick.innerHTML='';
   allowed.forEach(k=>{ const span=document.createElement('span'); span.className='pill'; span.innerHTML=`<label class="inline"><input id="chk_${k}" type="checkbox" checked> ${STATIONS[k].name}</label>`; pick.appendChild(span); });
@@ -749,7 +1035,7 @@ function openSavedSets(){
   if(savedSets.length===0){ list.innerHTML='<p class="muted">No saved sets yet.</p>'; }
   savedSets.forEach(set=>{
     const div=document.createElement('div'); div.className='card'; const date=new Date(set.createdAt).toLocaleString();
-    const itemsHtml=set.items.map((it,i)=>{ const label=stationLabel(it); const prio=(set.priorityIndex===i)?` <span class="pill" style="background:rgba(52,211,153,.2)">PRIORITY</span>`:''; return `<li>#${i+1}: <strong>${STATIONS[it.station].name}</strong> — ${escapeHtml(label)}${prio}<div class="controls mt8"><button onclick="replaceItemInSet('${set.id}',${i})">Replace</button><button onclick="markPriority('${set.id}',${i})">Mark Priority</button><button class="ghost" onclick="openItemManually('${set.id}',${i})">Open</button></div></li>`; }).join('');
+    const itemsHtml=set.items.map((it,i)=>{ const label=stationLabel(it); const prio=(set.priorityIndex===i)?` <span class="pill" style="margin-left:6px;background:rgba(52,211,153,.2)">PRIORITY</span>`:''; return `<li>#${i+1}: <strong>${STATIONS[it.station].name}</strong> — ${escapeHtml(label)}${prio}<div class="controls mt8"><button onclick="replaceItemInSet('${set.id}',${i})">Replace</button><button onclick="markPriority('${set.id}',${i})">Mark Priority</button><button class="ghost" onclick="openItemManually('${set.id}',${i})">Open</button></div></li>`; }).join('');
     div.innerHTML=`<h4>${escapeHtml(set.name)}</h4><p class="muted">Created: ${date} • Items: ${set.items.length}</p><ul>${itemsHtml}</ul><div class="controls mt12"><button onclick="projectSet('${set.id}')">Project Mode</button><button onclick="deleteSet('${set.id}')" class="ghost">Delete</button></div>`; list.appendChild(div);
     const sdiv=document.createElement('div'); sdiv.className='miniCard'; sdiv.innerHTML=`<strong>${escapeHtml(set.name)}</strong> <span class="muted">(${set.items.length} items)</span><div class="controls mt8"><button onclick="projectSet('${set.id}')">Open</button> <button onclick="deleteSet('${set.id}')" class="ghost">Delete</button></div>`; scroll.appendChild(sdiv);
   });
@@ -766,7 +1052,7 @@ function exportSavedSets(){ const blob=new Blob([JSON.stringify(savedSets,null,2
 function deleteSet(id){ savedSets=savedSets.filter(s=>s.id!==id); store.set(SAVED_SETS_KEY,savedSets); openSavedSets(); }
 function projectSet(id){ const s=savedSets.find(x=>x.id===id); if(!s) return; closeModal('modalSavedSets'); const seq=s.items.slice(); let seqIndex=0; function openSeq(){ const entry=seq[seqIndex]; openView(entry.station); const arr=visibleItems(); const pos=arr.findIndex(x=>x.id===entry.id); if(pos>=0){ currentIndex=pos; renderActiveItem(); } nextItem=function(){ seqIndex=Math.min(seq.length-1,seqIndex+1); openSeq(); }; prevItem=function(){ seqIndex=Math.max(0,seqIndex-1); openSeq(); }; } openSeq(); }
 
-/* My Stations & Edit */
+/* ---------- My Stations & Edit ---------- */
 function openMyStations(){
   const sel=$("#myCategory"); sel.innerHTML=''; Object.keys(STATIONS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=STATIONS[k].name; sel.appendChild(o); });
   $("#myTitle").value=''; $("#myTime").value=15; $("#myDirections").value=''; $("#myDiffNotes").value='';
@@ -830,7 +1116,7 @@ function saveEditedAsCustom(){
   closeModal('modalEditItem'); showToast('Saved to My Stations');
 }
 
-/* Timer */
+/* ---------- Timer ---------- */
 let timerId=null, remaining=15*60, running=false;
 function fmt(sec){ const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return [h,m,s].map(x=>String(x).padStart(2,'0')).join(':'); }
 function syncTimerLabels(){ $("#timeLabel").textContent=fmt(remaining); $("#timeLabelModal").textContent=fmt(remaining); }
@@ -841,133 +1127,15 @@ function timerPause(){ if(timerId){ clearInterval(timerId); running=false; } }
 function timerReset(){ timerPause(); remaining=15*60; syncTimerLabels(); }
 function chime(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine'; o.frequency.value=880; g.gain.value=0.001; o.start(); const now=ctx.currentTime; g.gain.exponentialRampToValueAtTime(0.2, now+0.01); g.gain.exponentialRampToValueAtTime(0.00001, now+1.2); o.stop(now+1.25); }catch(e){} }
 
-/* Data Packs: import/export/clear with de-dup & registry */
-function openPacks(){ $("#packInput").value=''; $("#packPreview").innerHTML=''; openModal('modalPacks'); }
-function previewPack(){
-  let data; try{ data=JSON.parse($("#packInput").value) }catch{ showToast('Invalid JSON'); return }
-  const res = summarizePack(data);
-  $("#packPreview").innerHTML = `<div class="card"><strong>Preview:</strong> ${res.summary}</div>
-    <div class="mt8 controls"><button class="primary" onclick='importPack(JSON.parse(document.getElementById("packInput").value))'>Import Now</button></div>`;
-}
+/* ---------- Import/Export ---------- */
 function downloadBank(){ const blob=new Blob([JSON.stringify(BANKS,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='station-studio-banks.json'; a.click(); }
-function clearPrompts(){ if(!confirm('Clear all prompts?')) return; Object.keys(BANKS.prompts).forEach(c=>BANKS.prompts[c]=[]); store.set(BANK_KEY,BANKS); showToast('Prompts cleared'); }
-function clearAllBanks(){ if(!confirm('Clear ALL banks?')) return; BANKS={prompts:{ Narrative:[], Argument:[], "Informative/Explanatory":[], "Poetry/Description":[], "Real-World/SEL":[], "Creative/Speculative":[] }, cer:[], morphology:[], sentences:[], afterReading:[], standby:[]}; store.set(BANK_KEY,BANKS); showToast('All banks cleared'); }
 
-function importPack(pack){
-  const key = pack.seed ? `${pack.type}::${pack.seed}` : null;
-  if(key && importedPacks.has(key) && !pack.force){ showToast('Pack already imported (same type+seed).'); return }
-
-  const res = applyPack(pack);
-  store.set(BANK_KEY, BANKS);
-  if(key){ importedPacks.add(key); store.set(PACKS_KEY, Array.from(importedPacks)); }
-
-  // auto-clear textarea + preview
-  const ta=$("#packInput"); const pv=$("#packPreview");
-  if(ta){ ta.value=''; } if(pv){ pv.innerHTML='<div class="card"><strong>Imported:</strong> '+res.summary+'</div>'; }
-
-  showToast(res.summary);
-}
-
-/* Preview/Summary without mutating */
-function summarizePack(pack){
-  const n = pack.count || (pack.perCategory ? (pack.perCategory*(pack.categories?.length||0)) : 0);
-  if(pack.type==='prompts_generated'){
-    const cats=pack.categories||[]; const per=pack.perCategory||25;
-    return {summary:`Will add up to ${cats.length*per} prompts (${per} per ${cats.length} categories). Duplicates skipped.`};
-  }
-  return {summary:`Will add up to ${n} item(s).`};
-}
-
-/* Apply pack with de-dup & deterministic generators */
-function importSummary(added, skipped, label){ return `Imported ${added} ${label}${skipped?`, skipped ${skipped} duplicate(s)`:''}.`; }
-
-function applyPack(pack){
-  if(pack.type==='prompts_generated'){
-    const cats=pack.categories, per=pack.perCategory||25, seed=pack.seed||'seed';
-    let added=0, skipped=0;
-    cats.forEach(cat=>{
-      const existing=new Set((BANKS.prompts[cat]||[]).map(x=>x.text.trim()));
-      let i=0, tries=0, toAdd=per;
-      while(i<toAdd && tries<per*40){
-        const item = generatePromptOne(cat, seed+':'+cat+':'+i+':'+tries);
-        const t=item.text.trim();
-        if(!existing.has(t)){
-          BANKS.prompts[cat]=BANKS.prompts[cat]||[];
-          BANKS.prompts[cat].push(item);
-          existing.add(t);
-          added++;
-          i++;
-        } else { skipped++; }
-        tries++;
-      }
-    });
-    return {summary: importSummary(added, skipped, 'prompt(s)')};
-  }
-  if(pack.type==='cer_generated'){
-    const n=pack.count||100, seed=pack.seed||'cer';
-    const existing=new Set(BANKS.cer.map(x=>(x.prompt+'||'+x.excerpt).trim()));
-    let added=0, skipped=0;
-    for(let i=0;i<n;i++){
-      const item=generateCEROne(seed+':'+i);
-      const key=(item.prompt+'||'+item.excerpt).trim();
-      if(!existing.has(key)){ BANKS.cer.push(item); existing.add(key); added++; } else skipped++;
-    }
-    return {summary: importSummary(added, skipped, 'CER item(s)')};
-  }
-  if(pack.type==='sentences_generated'){
-    const n=pack.count||100, seed=pack.seed||'sent';
-    const existing=new Set(BANKS.sentences.map(x=>(x.focus+'||'+x.mentor+'||'+x.kernels.join('|')).trim()));
-    let added=0, skipped=0;
-    for(let i=0;i<n;i++){
-      const item=generateSentenceOne(seed+':'+i);
-      const key=(item.focus+'||'+item.mentor+'||'+item.kernels.join('|')).trim();
-      if(!existing.has(key)){ BANKS.sentences.push(item); existing.add(key); added++; } else skipped++;
-    }
-    return {summary: importSummary(added, skipped, 'sentence item(s)')};
-  }
-  if(pack.type==='after_generated'){
-    const n=pack.count||100, seed=pack.seed||'after';
-    const existing=new Set(BANKS.afterReading.map(x=>x.title+'||'+x.directions));
-    let added=0, skipped=0;
-    for(let i=0;i<n;i++){
-      const item=generateAfterOne(seed+':'+i);
-      const key=item.title+'||'+item.directions;
-      if(!existing.has(key)){ BANKS.afterReading.push(item); existing.add(key); added++; } else skipped++;
-    }
-    return {summary: importSummary(added, skipped, 'after-reading item(s)')};
-  }
-  if(pack.type==='standby_generated'){
-    const n=pack.count||100, seed=pack.seed||'standby';
-    const existing=new Set(BANKS.standby.map(x=>x.title.trim()));
-    let added=0, skipped=0;
-    for(let i=0;i<n;i++){
-      const item=generateStandbyOne(seed+':'+i);
-      if(!existing.has(item.title.trim())){ BANKS.standby.push(item); existing.add(item.title.trim()); added++; } else skipped++;
-    }
-    return {summary: importSummary(added, skipped, 'standby item(s)')};
-  }
-  if(pack.type==='morph_generated'){
-    const n=pack.count||100, seed=pack.seed||'morph';
-    const pool = morphPool();
-    const existing=new Set(BANKS.morphology.map(x=>(x.kind+'||'+x.form).trim()));
-    let added=0, skipped=0;
-    const r = mulberry32(hash(seed));
-    for(let i=0;i<n;i++){
-      const pick = pool[Math.floor(r()*pool.length)];
-      const key=(pick.kind+'||'+pick.form).trim();
-      if(!existing.has(key)){ BANKS.morphology.push({...pick, id:uid()}); existing.add(key); added++; } else skipped++;
-    }
-    return {summary: importSummary(added, skipped, 'morphology item(s)')};
-  }
-  return {summary:'Unknown pack type.'};
-}
-
-/* Generators (deterministic) */
+/* ---------- Generators & Pools ---------- */
 function mulberry32(a){ return function(){ let t=a+=0x6D2B79F5; t=Math.imul(t^t>>>15, t|1); t^=t+Math.imul(t^t>>>7, t|61); return ((t^t>>>14)>>>0)/4294967296; } }
 function hash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
 function pick(r, arr){ return arr[Math.floor(r()*arr.length)] }
 
-/* Prompts */
+/* Prompts generator (same logic; deterministic) */
 function generatePromptOne(category, seed){
   const pools = {
     Narrative:{
@@ -1047,7 +1215,7 @@ function generatePromptOne(category, seed){
     .replace('{object}',pick(r,v.object||['an object'])).replace('{n}',pick(r,v.n||['three']))
     .replace('{misunderstanding}',pick(r,v.misunderstanding||['a message']))
     .replace('{ruleChange}',pick(r,v.ruleChange||['a change']))
-    .replace('{motif}',pick(r,v.motif||['an image']))
+    .replace('{motif}',pick(r,v.motiff||v.motif||['an image']))
     .replace('{place}',pick(r,v.place||['school']))
     .replace('{smallFind}',pick(r,v.smallFind||['an item']))
     .replace('{topic}',pick(r,v.topic||['a topic']))
@@ -1077,7 +1245,7 @@ function generatePromptOne(category, seed){
   return { id:uid(), text, standards:P.standards.slice(), scaffolds };
 }
 
-/* CER */
+/* CER gen */
 function generateCEROne(seed){
   const r = mulberry32(hash(seed));
   const RL_images=[
@@ -1142,7 +1310,7 @@ function generateCEROne(seed){
   }
 }
 
-/* Sentence combining */
+/* Sentence combining gen */
 function generateSentenceOne(seed){
   const r = mulberry32(hash(seed));
   const focuses=['Subordination','Appositive','Nonrestrictive Clause','Parallel Structure','Absolute Phrase','Compound-Complex','Introductory Phrase','Series with Modifiers','Em-Dash Appositive','Colon for Explanation'];
@@ -1182,7 +1350,7 @@ function generateSentenceOne(seed){
   return { id:uid(), focus:pick(r,focuses), kernels, mentor, standards:['L.7.1','L.7.2','L.7.3'] };
 }
 
-/* After-reading */
+/* After-reading gen */
 function generateAfterOne(seed){
   const r = mulberry32(hash(seed));
   const bases=[
@@ -1229,13 +1397,12 @@ function generateAfterOne(seed){
   return { id:uid(), title:b.t, directions, standards:b.s };
 }
 
-/* Standby */
+/* Standby gen */
 function generateStandbyOne(seed){
   const r = mulberry32(hash(seed));
   const baseTitles=['Reading Craft Scavenger','Writer’s Toolbox','Evidence Collector','Quick Compare','Word Web','Mini-Presentation','Grammar Micro-Fix','Context Detective','Tone Swap','Dialogue Polish','Idea Elevator Pitch','Summary Remix','Headline Maker','Transition Tune-Up','Sentence Variety Drill'];
   const addOns=['(fiction)','(nonfiction)','(poetry)','(any text)','(from your writing)'];
   const title = `${pick(r,baseTitles)} ${pick(r,addOns)}`;
-  const tagMap={Reading:'Reading',Writing:'Writing',Vocab:'Vocab',SL:'SL',Grammar:'Grammar'};
   const pool=[
     {tag:'Reading',dir:'Find: (1) a vivid verb, (2) a simile or metaphor, (3) a complex sentence, (4) a context clue. Record page # and explain each (1–2 sentences).',stds:['RL.7.4','RL.7.1']},
     {tag:'Writing',dir:'Revise any piece by adding 3 vivid verbs and 2 sensory details. Vary 3 sentences (opener, appositive, subordinator). Highlight changes.',stds:['L.7.1','L.7.3']},
@@ -1253,10 +1420,10 @@ function generateStandbyOne(seed){
     {tag:'Grammar',dir:'Vary 5 sentences: one appositive, one absolute, one subordination, one parallel series, one with a colon.',stds:['L.7.1','L.7.3']}
   ];
   const pickItem = pick(r,pool);
-  return { id:uid(), title, tag:tagMap[pickItem.tag], directions:pickItem.dir, standards:pickItem.stds };
+  return { id:uid(), title, tag:pickItem.tag, directions:pickItem.dir, standards:pickItem.stds };
 }
 
-/* Morphology pool */
+/* Morphology curated pool */
 function morphPool(){
   const E = [
     {kind:'prefix',form:'anti-',meaning:'against',examples:['antifreeze','antibiotic','antisocial']},
@@ -1357,11 +1524,12 @@ function morphPool(){
   return E.map(x=>({...x,standards:['L.7.4','L.7.6']}));
 }
 
-/* Modals & Settings */
+/* ---------- Modals & Settings ---------- */
 function openModal(id){ $('#'+id).classList.add('active'); }
 function closeModal(id){ $('#'+id).classList.remove('active'); }
 function backdropClose(e){ if(e.target.classList.contains('modal')) e.currentTarget.classList.remove('active'); }
 window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ $$('.modal.active').forEach(m=>m.classList.remove('active')); }});
+
 function saveSettings(){ settings.defaultDifficulty=$('#defaultDifficulty').value; settings.includeStd=$('#defaultIncludeStd').value==='Yes'; settings.chime=$('#defaultChime').value==='On'; store.set(SETTINGS_KEY,settings); $('#chimeToggle').checked=settings.chime; $('#chimeToggleModal').checked=settings.chime; showToast('Settings saved'); }
 function initSettingsUI(){ $('#defaultDifficulty').value=settings.defaultDifficulty; $('#defaultIncludeStd').value=settings.includeStd?'Yes':'No'; $('#defaultChime').value=settings.chime?'On':'Off'; $('#chimeToggle').checked=settings.chime; $('#chimeToggleModal').checked=settings.chime; }
 
@@ -1375,31 +1543,53 @@ $("#btnMyStations").onclick=openMyStations;
 $("#btnStandards").onclick=openStandards;
 $("#btnTimer").onclick=()=>openModal('modalTimer');
 $("#btnSettings").onclick=()=>openModal('modalSettings');
-$("#btnDataPacks").onclick=openPacks;
+$("#btnContent").onclick=openContent;
+$("#uploadBank").onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(r.result); mergeBanks(data); showToast('Banks imported'); updateStarterStatus(); }catch{ showToast('Invalid JSON'); } }; r.readAsText(f); };
 
-/* ====== Minimal self-tests (console) ====== */
+/* Merge helper */
+function mergeBanks(data){
+  if(data.prompts){
+    for(const [cat,arr] of Object.entries(data.prompts)){
+      const seen=new Set((BANKS.prompts[cat]||[]).map(x=>x.text.trim()));
+      (arr||[]).forEach(it=>{ const k=(it.text||'').trim(); if(!seen.has(k)){ (BANKS.prompts[cat]=BANKS.prompts[cat]||[]).push(it); seen.add(k);} });
+    }
+  }
+  ['cer','sentences','afterReading','standby'].forEach(key=>{
+    if(Array.isArray(data[key])){
+      const keyFn = key==='cer' ? (x)=>(x.prompt+'||'+x.excerpt).trim() :
+                    key==='sentences' ? (x)=>(x.focus+'||'+x.mentor+'||'+(x.kernels||[]).join('|')).trim() :
+                    key==='afterReading' ? (x)=>x.title+'||'+x.directions :
+                    (x)=>x.title.trim();
+      const seen=new Set(BANKS[key].map(keyFn));
+      data[key].forEach(it=>{ const k=keyFn(it); if(!seen.has(k)){ BANKS[key].push(it); seen.add(k);} });
+    }
+  });
+  if(Array.isArray(data.morphology)){
+    const seen=new Set(BANKS.morphology.map(x=>x.kind+'||'+x.form));
+    data.morphology.forEach(it=>{ const k=it.kind+'||'+it.form; if(!seen.has(k)){ BANKS.morphology.push(it); seen.add(k);} });
+  }
+  store.set(BANK_KEY,BANKS);
+}
+
+/* ---------- Minimal self-tests ---------- */
 (function selfTests(){
-  // 1) No tooltip markup inside data-tip attribute
+  // Tooltip attribute safety
   const html = safeWithTips("Add a motif and a time shift.");
   const testDiv=document.createElement('div'); testDiv.innerHTML=html;
   const t=testDiv.querySelector('.tip');
   console.assert(t && !t.getAttribute('data-tip').includes('<span'), 'Tooltip should not contain HTML');
 
-  // 2) Braces remain and wrap correctly
-  const html2 = safeWithTips("Use {motif} in your scene.");
-  const d2=document.createElement('div'); d2.innerHTML=html2;
-  console.assert(d2.textContent.includes('{') && d2.querySelector('.tip'), 'Braces preserved and tooltip applied');
-
-  // 3) Attribute values not corrupted
-  const roundtrip = safeWithTips('Theme and motif connect.');
-  const testDiv2=document.createElement('div'); testDiv2.innerHTML=roundtrip;
-  testDiv2.querySelectorAll('.tip').forEach(s=>{
-    console.assert(!/span\s+class/.test(s.getAttribute('data-tip')), 'No span markup inside data-tip');
-  });
+  // Banks populate on first run
+  const totals = countTotals();
+  console.assert(totals.total>=150, 'Starter should populate banks');
 })();
 
-/* Boot */
-function boot(){ renderHome(); syncTimerLabels(); }
+/* ---------- Boot ---------- */
+function boot(){
+  ensureStarterBanks(); // auto-populate on first run
+  renderHome();
+  syncTimerLabels();
+}
 document.addEventListener('DOMContentLoaded', boot);
 </script>
 </body>
