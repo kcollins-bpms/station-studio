@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Station Studio — Teacher Hub</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121a2a; --text:#e6edf3; --muted:#9fb0c6;
+    --line:rgba(255,255,255,.10); --accent:#22d3ee; --accent2:#7dd3fc;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --good:#34d399; --warn:#f59e0b;
+  }
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1100px 700px at 10% 0%, #0a1936 0%, var(--bg) 45%, #080d1a 100%);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(8,13,26,.95),rgba(8,13,26,.65));backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+  .wrap{max-width:1160px;margin:0 auto;padding:16px}
+  .hdr{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  h1{margin:0;font-size:22px}
+  .sub{font-size:12px;color:var(--muted)}
+  .container{max-width:1160px;margin:0 auto;padding:18px 16px 80px}
+
+  button{background:#162341;border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;transition:.15s;box-shadow:var(--shadow);font-weight:600}
+  button:hover{transform:translateY(-1px);background:#1a2a4e}
+  .primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#042029;border-color:transparent}
+  .ghost{background:transparent;border:1px dashed var(--line)}
+  .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f182c;font-size:12px;color:var(--muted)}
+  .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f182c;font-size:11px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%}
+
+  .panel{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));box-shadow:var(--shadow);margin-top:18px}
+  .panel .head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .panel .body{padding:16px}
+  .muted{color:var(--muted)}
+  .hidden{display:none}
+  .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .inline{display:inline-flex;align-items:center;gap:6px}
+  .inlineField{display:inline-flex;align-items:center;gap:8px}
+
+  .seg{background:#0f1a2d;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:inline-flex}
+  .seg button{border:0;border-right:1px solid var(--line);background:transparent}
+  .seg button.active{background:#203355}
+  .seg button:last-child{border-right:0}
+
+  /* tiles */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:940px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}}
+  .tile{
+    position:relative;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+    border:1px solid var(--line);box-shadow:var(--shadow);min-height:170px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;cursor:pointer;overflow:hidden;padding:18px
+  }
+  .tileLabel{font-size:24px;font-weight:800;text-align:center;z-index:1}
+  .tileInner{
+    width:100%;max-height:0;overflow:hidden;border-top:1px solid var(--line);
+    transition:max-height .2s ease; margin-top:10px
+  }
+  .tile:hover .tileInner{max-height:110px}
+  .tileInnerContent{padding:12px 6px 6px 6px;font-size:13px;color:var(--muted);text-align:center}
+  .tile:hover .tileLabel{transform:translateY(-2px)}
+
+  /* projector-friendly text */
+  .projected h4{font-size:26px;margin:0 0 6px}
+  .projected p, .projected li{font-size:18px;line-height:1.6;white-space:pre-line}
+
+  .kvs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:900px){.kvs{grid-template-columns:1fr}}
+  .card{background:#0f1626;border:1px solid var(--line);border-radius:14px;padding:14px}
+
+  /* list view */
+  .scrollList{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:8px}
+  .miniCard{background:#0f1626;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
+
+  /* copy panel */
+  .copybox{white-space:pre-wrap;background:#0a1528;border:1px dashed rgba(255,255,255,.18);padding:12px;border-radius:12px;font-size:14px}
+
+  /* modal: semi-opaque overlay so page is still visible */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:50}
+  .modal.active{display:flex}
+  .sheet{width:min(780px,92vw);max-height:88vh;overflow:auto;background:#0f1626;border:1px solid rgba(255,255,255,.18);border-radius:18px;box-shadow:var(--shadow)}
+  .sheet .head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .sheet .body{padding:16px;overflow-wrap:anywhere}
+
+  /* pack modal tighter to avoid horizontal scroll */
+  #modalPacks .sheet{width:min(720px,92vw)}
+
+  /* timer */
+  .timer{display:flex;gap:10px;align-items:center}
+  .time{font-size:38px;font-weight:800;letter-spacing:1px}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tabs button{padding:8px 10px}
+  .tabs button.active{background:#203355}
+
+  /* tooltip */
+  .tip{position:relative;border-bottom:1px dotted rgba(255,255,255,.5);cursor:help}
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute;left:0;bottom:120%;
+    background:#101a30;border:1px solid rgba(255,255,255,.18);color:#e6edf3;
+    padding:8px 10px;border-radius:10px;white-space:normal;width:260px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(6px);transition:.12s
+  }
+  .tip:hover::after{opacity:1;transform:translateY(0)}
+
+  /* toast */
+  .toast{position:fixed;bottom:20px;right:20px;background:#0f1830;color:var(--text);padding:10px 12px;border-radius:10px;border:1px solid var(--line);box-shadow:var(--shadow);display:none}
+  .toast.show{display:block}
+
+  input, select, textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b1426;color:var(--text);box-sizing:border-box}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hdr">
+    <div>
+      <h1>Station Studio</h1>
+      <div class="sub">Teacher hub for standards-aligned ELA stations (Grade 7)</div>
+    </div>
+    <div class="controls">
+      <button id="btnCreateSet" class="primary">Create Set of X</button>
+      <button id="btnSavedSets">Saved Sets</button>
+      <button id="btnMyStations">My Stations</button>
+      <button id="btnDataPacks">Data Packs</button>
+      <button id="btnStandards">Standards Filter</button>
+      <button id="btnTimer">Timer</button>
+      <button id="btnSettings" class="ghost">Settings</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- HOME -->
+  <section id="home" class="panel">
+    <div class="head">
+      <div class="controls"><span class="muted">Choose a station category to begin</span></div>
+      <div class="controls"></div>
+    </div>
+    <div class="body">
+      <div class="grid" id="homeGrid"></div>
+    </div>
+  </section>
+
+  <!-- VIEW -->
+  <section id="viewPanel" class="panel hidden">
+    <div class="head">
+      <div class="controls">
+        <button onclick="backHome()">⬅ Home</button>
+        <h3 id="viewTitle" style="margin:0 8px"></h3>
+        <span id="countBadge" class="badge"></span>
+        <span id="standardsBadge" class="badge hidden"></span>
+      </div>
+      <div class="controls">
+        <div id="difSeg" class="seg" role="group" aria-label="difficulty">
+          <button id="difSupport" onclick="setDifficulty('Support')">Support</button>
+          <button id="difCore" class="active" onclick="setDifficulty('Core')">Core</button>
+          <button id="difChallenge" onclick="setDifficulty('Challenge')">Challenge</button>
+        </div>
+        <div id="categoryWrap" class="inlineField hidden">
+          <span class="muted">Category</span>
+          <select id="categorySelect"></select>
+        </div>
+        <button id="btnListView" class="ghost" onclick="toggleListView()">List View</button>
+        <button onclick="prevItem()">◀ Prev</button>
+        <button onclick="nextItem()">Next ▶</button>
+        <button onclick="randomItem()">New Random</button>
+        <input id="jumpInput" type="number" min="1" style="width:100px" placeholder="Jump #" onkeydown="if(event.key==='Enter') jumpTo()" />
+        <button onclick="jumpTo()">Go</button>
+        <button id="btnHideItem" class="ghost" onclick="hideCurrentItem()">Hide this item</button>
+        <button id="btnEdit" onclick="openEditModal()">Edit</button>
+      </div>
+    </div>
+    <div class="body projected">
+      <div id="stationContent"></div>
+      <div class="mt16">
+        <div class="timer">
+          <span class="time" id="timeLabel">00:15:00</span>
+          <button onclick="timerPreset(10)">10</button>
+          <button onclick="timerPreset(12)">12</button>
+          <button onclick="timerPreset(15)">15</button>
+          <button onclick="timerPreset(18)">18</button>
+          <button onclick="timerPreset(20)">20</button>
+          <input id="timerCustom" type="number" min="1" style="width:90px" placeholder="min" />
+          <button onclick="timerCustom()">Set</button>
+          <button onclick="timerStart()" class="primary">Start</button>
+          <button onclick="timerPause()">Pause</button>
+          <button onclick="timerReset()">Reset</button>
+        </div>
+        <label class="inline mt8"><input id="chimeToggle" type="checkbox" checked /> Chime at time-up</label>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- CREATE SET -->
+<div id="modalCreateSet" class="modal" onclick="backdropClose(event)">
+  <div class="sheet">
+    <div class="head"><strong>Create Set</strong><button onclick="closeModal('modalCreateSet')">✕</button></div>
+    <div class="body">
+      <div class="kvs">
+        <div><label>Set name</label><input id="setName" placeholder="e.g., Week 7 — Figurative Language focus" /></div>
+        <div><label>How many items?</label><input id="setCount" type="number" min="1" max="12" value="6" /></div>
+      </div>
+      <div class="mt12"><label>Include from these stations</label><div id="setStationPick" class="controls"></div></div>
+
+      <div id="setPromptCatRow" class="mt12 hidden">
+        <label>Writing Prompts — category</label>
+        <select id="setPromptsCategory"></select>
+      </div>
+
+      <label class="inline mt12"><input id="allowDuplicates" type="checkbox" /> Allow duplicates across stations</label>
+      <div class="mt16 controls">
+        <button class="primary" onclick="createSetNow()">Create</button>
+        <button class="ghost" onclick="closeModal('modalCreateSet')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED SETS -->
+<div id="modalSavedSets" class="modal" onclick="backdropClose(event)">
+  <div class="sheet">
+    <div class="head"><strong>Saved Sets</strong><button onclick="closeModal('modalSavedSets')">✕</button></div>
+    <div class="body">
+      <div class="controls mt8"><button id="toggleSetList" onclick="toggleSavedSetsList()">Scrollable List View</button></div>
+      <div id="savedSetsList" class="mt12"></div>
+      <div id="savedSetsListScroll" class="scrollList hidden mt12"></div>
+      <div class="mt12 controls">
+        <button onclick="exportSavedSets()">Export Sets (JSON)</button>
+        <label class="btn" for="importSets">Import Sets JSON</label>
+        <input id="importSets" type="file" accept="application/json" class="hidden" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MY STATIONS -->
+<div id="modalMyStations" class="modal" onclick="backdropClose(event)">
+  <div class="sheet">
+    <div class="head"><strong>My Stations</strong><button onclick="closeModal('modalMyStations')">✕</button></div>
+    <div class="body">
+      <div class="kvs">
+        <div><label>Title</label><input id="myTitle" placeholder="e.g., Tone through Diction — Mini Analysis" /></div>
+        <div><label>Station Category</label><select id="myCategory"></select></div>
+        <div><label>Time (minutes)</label><input id="myTime" type="number" min="5" value="15" /></div>
+        <div><label>Difficulty Notes (optional)</label><input id="myDiffNotes" placeholder="Support/Core/Challenge scaffolds" /></div>
+      </div>
+      <div class="mt12"><label>Directions / Prompt</label><textarea id="myDirections" rows="5"></textarea></div>
+      <div class="mt12"><label class="inline">CCSS Codes (type and Enter) <input id="myStdInput" placeholder="e.g., RL.7.1" style="width:180px" /></label><div id="myStdChips" class="controls"></div></div>
+      <div class="mt12 controls">
+        <button class="primary" onclick="saveMyStation()">Add to My Stations</button>
+        <button class="ghost" onclick="downloadMyStations()">Export My Stations (JSON)</button>
+        <label class="btn" for="uploadMyStations">Import My Stations</label>
+        <input id="uploadMyStations" type="file" accept="application/json" class="hidden" />
+      </div>
+      <div class="mt16"><h4>Saved — My Stations</h4><div id="myStationsList" class="grid"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div id="modalEditItem" class="modal" onclick="backdropClose(event)">
+  <div class="sheet" style="width:min(900px,92vw)">
+    <div class="head"><strong>Edit & Save as Custom</strong><button onclick="closeModal('modalEditItem')">✕</button></div>
+    <div class="body">
+      <div class="kvs">
+        <div><label>Title</label><input id="editTitle" /></div>
+        <div><label>Save under category</label><select id="editCategory"></select></div>
+      </div>
+      <div class="mt12"><label>Main text (instructions / prompt / excerpt)</label><textarea id="editMain" rows="8"></textarea></div>
+      <div class="mt12"><label>Scaffold / Notes (optional)</label><textarea id="editScaffold" rows="4"></textarea></div>
+      <div class="mt12"><label class="inline">CCSS Codes (type and Enter) <input id="editStdInput" placeholder="e.g., RL.7.1" style="width:180px" /></label><div id="editStdChips" class="controls"></div></div>
+      <div class="mt12 controls"><button class="primary" onclick="saveEditedAsCustom()">Save as My Station</button><button class="ghost" onclick="closeModal('modalEditItem')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- STANDARDS (tabbed) -->
+<div id="modalStandards" class="modal" onclick="backdropClose(event)">
+  <div class="sheet" style="width:min(620px,92vw)">
+    <div class="head"><strong>Standards Filter</strong><button onclick="closeModal('modalStandards')">✕</button></div>
+    <div class="body">
+      <div class="tabs">
+        <button id="tabSearch" class="active" onclick="switchStdTab('search')">Search</button>
+        <button id="tabBrowse" onclick="switchStdTab('browse')">Browse</button>
+      </div>
+      <div id="stdSearchPane">
+        <input id="stdSearch" placeholder="Type e.g., RL.7.1 or 'theme'" />
+        <div id="stdSearchResults" class="mt8"></div>
+      </div>
+      <div id="stdBrowsePane" class="hidden">
+        <div id="stdTree" class="mt8"></div>
+      </div>
+      <div class="mt12"><label>Selected</label><div id="selectedStdChips" class="controls"></div></div>
+      <div class="mt12 controls"><button class="primary" onclick="applyStandardsFilter()">Apply Filter</button><button class="ghost" onclick="clearStandardsFilter()">Clear</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- DATA PACKS -->
+<div id="modalPacks" class="modal" onclick="backdropClose(event)">
+  <div class="sheet">
+    <div class="head"><strong>Data Packs</strong><button onclick="closeModal('modalPacks')">✕</button></div>
+    <div class="body">
+      <p class="muted">Paste a JSON pack below, then click <em>Preview & Import</em>.</p>
+      <textarea id="packInput" rows="10" placeholder='Paste JSON pack here'></textarea>
+      <div class="controls mt8">
+        <button onclick="previewPack()">Preview & Import</button>
+        <button class="ghost" onclick="downloadBank()">Export Current Banks</button>
+        <button class="ghost" onclick="clearPrompts()">Clear Prompts</button>
+        <button class="ghost" onclick="clearAllBanks()">Clear ALL Banks</button>
+      </div>
+      <div id="packPreview" class="mt12"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div id="modalTimer" class="modal" onclick="backdropClose(event)">
+  <div class="sheet" style="width:min(640px,92vw)">
+    <div class="head"><strong>Timer</strong><button onclick="closeModal('modalTimer')">✕</button></div>
+    <div class="body">
+      <div class="timer">
+        <span class="time" id="timeLabelModal">00:15:00</span>
+        <button onclick="timerPreset(10)">10</button><button onclick="timerPreset(12)">12</button><button onclick="timerPreset(15)">15</button><button onclick="timerPreset(18)">18</button><button onclick="timerPreset(20)">20</button>
+        <input id="timerCustomModal" type="number" min="1" style="width:90px" placeholder="min" /><button onclick="timerCustom(true)">Set</button>
+      </div>
+      <div class="mt12">
+        <button onclick="timerStart()" class="primary">Start</button>
+        <button onclick="timerPause()">Pause</button>
+        <button onclick="timerReset()">Reset</button>
+        <label class="inline mt8" style="margin-left:12px"><input id="chimeToggleModal" type="checkbox" checked /> Chime at time-up</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">Copied to clipboard</div>
+
+<script>
+/* ========== Utilities & Store ========== */
+const $ = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+const uid = ()=>Math.random().toString(36).slice(2,10);
+const store = { get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+function showToast(m){const t=$("#toast");t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
+
+/* Tooltips: term → definition */
+const GLOSSARY = {
+  "motif":"A recurring image, idea, or symbol that supports a theme.",
+  "time shift":"A deliberate jump in time (e.g., flashback or flash-forward) to shape meaning.",
+  "flashback":"A scene set earlier than the main story to reveal important context.",
+  "foreshadowing":"Hints that suggest what will happen later in the story.",
+  "counterclaim":"An opposing viewpoint you acknowledge and respond to.",
+  "appositive":"A noun or noun phrase that renames another noun and is often set off by commas.",
+  "subordination":"Joining ideas so one is dependent on the other (e.g., although, because).",
+  "nonrestrictive clause":"Extra information that can be removed without changing core meaning; set off by commas.",
+  "absolute phrase":"A noun + participle structure that adds detail (e.g., 'Hands shaking, …').",
+  "parallel structure":"Using the same grammatical pattern to show equal ideas.",
+  "diction":"A writer’s word choices and their effect.",
+  "imagery":"Language that appeals to the senses.",
+  "pacing":"How quickly or slowly a text moves to create effect.",
+  "symbolism":"When an object or image represents a bigger idea.",
+  "claim":"Your main point or answer to a question.",
+  "evidence":"Quoted or paraphrased support from a text or source.",
+  "reasoning":"Explanation that connects evidence to your claim.",
+  "central idea":"What a text is mostly about; the main message in informational text.",
+  "theme":"A message about life or human experience in literary text."
+};
+
+/* Safer tooltipifier: operates only on TEXT NODES so attribute values are untouched */
+const TIP_TERMS = Object.keys(GLOSSARY).sort((a,b)=>b.length-a.length);
+const TIP_REGEX = new RegExp("\\b(" + TIP_TERMS.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join("|") + ")\\b","gi");
+
+function tipify(text){
+  // Start safe: create a div where text is only textContent (escaped)
+  const div=document.createElement('div');
+  div.textContent = String(text);
+  function walk(node){
+    const kids=[...node.childNodes];
+    for(const child of kids){
+      if(child.nodeType===3){ // Text
+        const raw = child.nodeValue;
+        if(!TIP_REGEX.test(raw)){ TIP_REGEX.lastIndex=0; continue; }
+        TIP_REGEX.lastIndex=0;
+        const parts = raw.split(TIP_REGEX);
+        if(parts.length>1){
+          const frag=document.createDocumentFragment();
+          for(let i=0;i<parts.length;i++){
+            const part=parts[i];
+            if(part===undefined || part==="") continue;
+            if(i%2===1){ // matched term
+              // resolve canonical key (case-insensitive)
+              const key = TIP_TERMS.find(k=>k.toLowerCase()===part.toLowerCase()) || part;
+              const span=document.createElement('span');
+              span.className='tip';
+              span.setAttribute('data-tip', GLOSSARY[key] || part);
+              span.textContent = part;
+              frag.appendChild(span);
+            }else{
+              frag.appendChild(document.createTextNode(part));
+            }
+          }
+          node.replaceChild(frag, child);
+        }
+      } else if(child.nodeType===1){
+        if(child.classList && child.classList.contains('tip')) continue; // don't recurse into our tips
+        walk(child);
+      }
+    }
+  }
+  walk(div);
+  return div.innerHTML;
+}
+function safeWithTips(s){ return tipify(s); }
+
+/* Settings & Store keys */
+const SETTINGS_KEY='ss.settings.v6';
+const SAVED_SETS_KEY='ss.savedSets.v6';
+const HIDDEN_KEY='ss.hidden.v6';
+const MINE_KEY='ss.myStations.v6';
+const STD_FILTER_KEY='ss.stdFilter.v6';
+const BANK_KEY='ss.banks.v6';
+const PACKS_KEY='ss.packs.v4';
+
+let settings = store.get(SETTINGS_KEY) || { defaultDifficulty:'Core', includeStd:false, chime:true };
+let savedSets = store.get(SAVED_SETS_KEY) || [];
+let hiddenIds = new Set(store.get(HIDDEN_KEY)||[]);
+let myStations = store.get(MINE_KEY)||[];
+let stdFilter = new Set(store.get(STD_FILTER_KEY)||[]);
+let importedPacks = new Set(store.get(PACKS_KEY)||[]);
+
+/* CCSS short summaries */
+const CCSS = {
+  RL:{'RL.7.1':'Cite evidence; make inferences.','RL.7.2':'Theme/central idea; summarize.','RL.7.3':'How story elements interact.','RL.7.4':'Words/phrases & impact.','RL.7.5':'Structure’s effect.','RL.7.6':'Point of view.'},
+  RI:{'RI.7.1':'Cite evidence; informational inferences.','RI.7.2':'Central ideas; objective summary.','RI.7.3':'Interactions among ideas/events.','RI.7.4':'Words/phrases in context.','RI.7.5':'Analyze text structure.','RI.7.6':'Author’s purpose/POV.'},
+  W:{'W.7.1':'Argument writing.','W.7.2':'Informative writing.','W.7.3':'Narratives.','W.7.4':'Clear, coherent writing.','W.7.5':'Plan, revise, edit.','W.7.6':'Use technology for writing.','W.7.9':'Use evidence from texts.','W.7.10':'Write routinely.'},
+  L:{'L.7.1':'Grammar and usage.','L.7.2':'Capitalization, punctuation, spelling.','L.7.3':'Style and effect.','L.7.4':'Determine/clarify meaning.','L.7.5':'Figurative language.','L.7.6':'Academic vocabulary.'},
+  SL:{'SL.7.1':'Collaborative discussions.','SL.7.4':'Present claims/findings.','SL.7.5':'Use digital media.'}
+};
+function lookupStd(code){ for(const [dom,map] of Object.entries(CCSS)){ if(map[code]) return map[code]; } const dom=code.split('.')[0]; if(CCSS[dom]) return dom+' — domain'; return code; }
+
+/* Banks (persisted) */
+let BANKS = store.get(BANK_KEY) || {
+  prompts:{ Narrative:[], Argument:[], "Informative/Explanatory":[], "Poetry/Description":[], "Real-World/SEL":[], "Creative/Speculative":[] },
+  cer:[],
+  morphology:[],
+  sentences:[],
+  afterReading:[],
+  standby:[]
+};
+
+/* Stations registry */
+const STATIONS = {
+  prompts:{ key:'prompts', name:'Writing Prompts', kind:'multiCategory',
+    desc:'Narrative, Argument, Informative/Explanatory, Poetry/Description, Real-World/SEL, Creative/Speculative.'},
+  cer:{ key:'cer', name:'CER Micro-Analysis', kind:'flat',
+    desc:'Excerpt + Claim/Evidence/Reasoning.'},
+  morphology:{ key:'morphology', name:'Morphology Builder', kind:'flat',
+    desc:'Prefixes, roots, suffixes; define and use.'},
+  sentences:{ key:'sentences', name:'Sentence Combining', kind:'flat',
+    desc:'Combine kernels; imitate a mentor sentence.'},
+  afterReading:{ key:'afterReading', name:'After-Reading Menu', kind:'flat',
+    desc:'Quick analysis tasks for any text.'},
+  standby:{ key:'standby', name:'Standby Library', kind:'flat',
+    desc:'Early-finisher tasks across skills.'}
+};
+function stationUsesDifficulty(){ return true } // all have scaffolds
+
+/* Home tiles */
+function renderHome(){
+  const grid=$("#homeGrid"); grid.innerHTML='';
+  Object.values(STATIONS).forEach(st=>{
+    const tile=document.createElement('div'); tile.className='tile'; tile.setAttribute('data-open',st.key);
+    tile.innerHTML = `
+      <div class="tileLabel">${st.name}</div>
+      <div class="tileInner"><div class="tileInnerContent">${st.desc}</div></div>`;
+    tile.addEventListener('click',()=>openView(st.key));
+    grid.appendChild(tile);
+  });
+}
+
+/* Standards modal (tabbed) */
+function switchStdTab(which){
+  $("#tabSearch").classList.toggle('active', which==='search');
+  $("#tabBrowse").classList.toggle('active', which==='browse');
+  $("#stdSearchPane").classList.toggle('hidden', which!=='search');
+  $("#stdBrowsePane").classList.toggle('hidden', which!=='browse');
+}
+function openStandards(){ renderStdTree(); renderSelectedStdChips(); $("#stdSearch").value=''; $("#stdSearchResults").innerHTML=''; switchStdTab('search'); openModal('modalStandards'); }
+function renderStdTree(){
+  const tree=$("#stdTree"); tree.innerHTML='';
+  for(const dom of Object.keys(CCSS)){
+    const wrap=document.createElement('div'); wrap.className='card';
+    const entries=Object.entries(CCSS[dom]).map(([code,desc])=>`<label style="display:block;margin:.25rem 0"><input type="checkbox" data-std="${code}" ${stdFilter.has(code)?'checked':''}/> ${code} — <span class="muted">${desc}</span></label>`).join('');
+    wrap.innerHTML = `<strong>${dom}</strong><div class="mt8">${entries}</div>`;
+    tree.appendChild(wrap);
+  }
+  tree.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.onchange=(e)=>{ const code=e.target.getAttribute('data-std'); if(e.target.checked) stdFilter.add(code); else stdFilter.delete(code); renderSelectedStdChips(); };
+  });
+}
+function renderSelectedStdChips(){
+  const box=$("#selectedStdChips"); box.innerHTML='';
+  Array.from(stdFilter).forEach(code=>{
+    const span=document.createElement('span'); span.className='pill'; span.innerHTML=`${code} <button class="ghost" onclick="removeStd('${code}')">✕</button>`;
+    box.appendChild(span);
+  });
+}
+function removeStd(code){ stdFilter.delete(code); renderStdTree(); renderSelectedStdChips(); }
+$("#stdSearch")?.addEventListener('input', e=>{
+  const q=e.target.value.toLowerCase().trim(); const res=$("#stdSearchResults"); res.innerHTML=''; if(!q) return;
+  const hits=[]; for(const [dom,obj] of Object.entries(CCSS)){ for(const [code,desc] of Object.entries(obj)){ if(code.toLowerCase().includes(q)||desc.toLowerCase().includes(q)) hits.push([code,desc]); } }
+  res.innerHTML = hits.slice(0,30).map(([code,desc])=>`<div class="pill">${code} — <span class="muted">${desc}</span> <button onclick="addStd('${code}')">Add</button></div>`).join('') || '<p class="muted">No matches.</p>';
+});
+function addStd(code){ stdFilter.add(code); renderSelectedStdChips(); }
+function applyStandardsFilter(){ store.set(STD_FILTER_KEY, Array.from(stdFilter)); closeModal('modalStandards'); if(activeKey) renderActiveItem(); showToast('Standards filter applied'); }
+function clearStandardsFilter(){ stdFilter.clear(); store.set(STD_FILTER_KEY, []); renderStdTree(); renderSelectedStdChips(); if(activeKey) renderActiveItem(); }
+
+/* View routing & rendering */
+let activeKey=null, currentIndex=0, difficulty=settings.defaultDifficulty||'Core', listView=false, currentCategory='Any';
+
+function openView(key){
+  activeKey=key; currentIndex=0; listView=false; $("#btnListView").textContent='List View';
+  $("#home").classList.add('hidden'); $("#viewPanel").classList.remove('hidden');
+  $("#viewTitle").textContent=STATIONS[key].name;
+  $("#difSeg").classList.toggle('hidden', !stationUsesDifficulty(key));
+  setDifficulty(settings.defaultDifficulty);
+
+  if(key==='prompts'){
+    setupCategoryUI(Object.keys(BANKS.prompts));
+  }else{
+    $("#categoryWrap").classList.add('hidden');
+  }
+  renderActiveItem();
+}
+function backHome(){ $("#viewPanel").classList.add('hidden'); $("#home").classList.remove('hidden'); }
+
+function setupCategoryUI(categories){
+  const sel=$("#categorySelect"); sel.innerHTML='';
+  ['Any', ...categories].forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+  sel.value='Any'; currentCategory='Any';
+  $("#categoryWrap").classList.remove('hidden');
+  sel.onchange=()=>{ currentCategory=sel.value; currentIndex=0; renderActiveItem(); };
+}
+
+function matchesStandards(itemStd=[],filterList=[]){ if(!filterList.length) return true; return itemStd?.some(code=>filterList.some(f=>f.endsWith('.*')?code.startsWith(f.split('.')[0]):code===f)); }
+function visibleItems(){
+  const filter=Array.from(stdFilter);
+  if(activeKey==='prompts'){
+    const arr=[];
+    const cats = currentCategory==='Any' ? Object.keys(BANKS.prompts) : [currentCategory];
+    cats.forEach(cat=>{
+      for(const it of (BANKS.prompts[cat]||[])){
+        if(hiddenIds.has(it.id)) continue;
+        if(filter.length && !matchesStandards(it.standards, filter)) continue;
+        arr.push({...it,__cat:cat});
+      }
+    });
+    return arr;
+  }else{
+    return (BANKS[activeKey]||[]).filter(it=>!hiddenIds.has(it.id) && (!filter.length || matchesStandards(it.standards, filter)));
+  }
+}
+
+function copyBlock(title, directions, standards){
+  const id='copy_'+uid(); const includeDefault=settings.includeStd;
+  const stdCodes=standards?.join(', ')||''; const stdLines=standards?.map(s=>`- ${s}: ${lookupStd(s)}`).join('\n')||'';
+  const base=`${title}\n\nDirections:\n${directions}`;
+  return `
+    <div class="mt16">
+      <div class="controls">
+        <button class="ghost" onclick="toggleCopy('${id}')">Copy-Friendly Directions</button>
+        <label class="inline"><input id="inc_${id}" type="checkbox" ${includeDefault?'checked':''}/> Include standards in copy</label>
+      </div>
+      <div id="${id}" class="hidden mt8">
+        <div class="copybox" data-base="${encodeURIComponent(base)}" data-stdcodes="${encodeURIComponent(stdCodes)}" data-stdlines="${encodeURIComponent(stdLines)}">${escapeHtml(base)}${ includeDefault&&standards?.length ? `\n\nStandards: ${escapeHtml(stdCodes)}\n${escapeHtml(stdLines)}`:''}</div>
+        <div class="mt8"><button class="primary" onclick="copyFrom('${id}')">Copy</button></div>
+      </div>
+    </div>`;
+}
+function toggleCopy(id){ $('#'+id).classList.toggle('hidden'); }
+function copyFrom(id){ const box=$('#'+id+' .copybox'); const include=$('#inc_'+id)?.checked; let text=decodeURIComponent(box.getAttribute('data-base')||''); if(include){ const codes=decodeURIComponent(box.getAttribute('data-stdcodes')||''); const lines=decodeURIComponent(box.getAttribute('data-stdlines')||''); if(codes) text+=`\n\nStandards: ${codes}`; if(lines) text+=`\n${lines}`; } navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard')); }
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+/* Readable, stepwise scaffolds — each number on its own line; no {…} */
+function defaultScaffold(kind, diff){
+  const S={
+    Support:{
+      prompts:`1) Plan: beginning → turning point → outcome.\n2) Include 2 sensory details.\n3) Write 8–10 sentences.`,
+      cer:`1) Claim: answer the question in 1 sentence.\n2) Evidence: cite 2 short quotes (≤8 words each).\n3) Reasoning: explain in 2–3 sentences how each quote supports your claim.`,
+      morphology:`1) Build 4 words with the form.\n2) Define each and mark part of speech.\n3) Write a 3-sentence story using at least 2 of your words.`,
+      sentences:`1) Combine the kernels with Although/When/Because.\n2) Read aloud and fix punctuation.\n3) Write 1 sentence that imitates the mentor.`,
+      afterReading:`1) Write: “The theme/idea is __.”\n2) Cite 1 strong moment.\n3) Explain in 2–3 sentences how it shows the idea.`,
+      standby:`1) Choose a task.\n2) Follow steps exactly.\n3) Check your work with a partner or rubric.`
+    },
+    Core:{
+      prompts:`1) State your focus in the first 2 sentences.\n2) Use concrete details and smooth transitions.\n3) Write 10–12 sentences.`,
+      cer:`1) Claim.\n2) Quote #1 + 2–3 sentences of explanation.\n3) Quote #2 + 2–3 sentences of explanation.\n4) Conclude with a takeaway.`,
+      morphology:`1) Create 4 valid words; define + part of speech.\n2) Write a 3–4 sentence micro-story using at least 3 of them.`,
+      sentences:`1) Combine the kernels into clear, polished sentences.\n2) Imitate the mentor’s structure; vary one element.\n3) Check capitalization and commas.`,
+      afterReading:`1) Cite 1–2 key moments.\n2) Explain in 3–4 sentences how they contribute to the whole text.\n3) End with a clear takeaway.`,
+      standby:`1) Complete the task.\n2) Add a brief justification of one choice you made.`
+    },
+    Challenge:{
+      prompts:`1) Add a purposeful motif or time shift.\n2) Use at least one complex sentence.\n3) Craft a precise ending that “lands” the idea.`,
+      cer:`1) Make a nuanced claim.\n2) Use two quotes with close analysis.\n3) Address a limitation or counter-reading in 1–2 sentences.`,
+      morphology:`1) Add a short etymology note for 1 word.\n2) Use parallel structure in your micro-story.`,
+      sentences:`1) Combine using two techniques (e.g., appositive + subordination).\n2) Create two polished sentences and one mentor imitation.`,
+      afterReading:`1) Make a nuanced claim.\n2) Cite, analyze, and connect ideas across the text.\n3) Address an alternative view briefly.`,
+      standby:`1) Extend the product (mini-graphic or 60-sec share).\n2) Explain your design/wording choices.`
+    }
+  };
+  const key=diff==='Support'?'Support':diff==='Challenge'?'Challenge':'Core';
+  return S[key][kind];
+}
+
+function renderActiveItem(){
+  const items=visibleItems();
+  if(items.length===0){ $("#stationContent").innerHTML='<p class="muted">No items match the current standards filter. Clear the filter to see more.</p>'; $("#countBadge").textContent='0 of 0'; $("#standardsBadge").classList.add('hidden'); return; }
+  if(listView){ $("#stationContent").innerHTML=renderListView(items); $("#countBadge").textContent=`${items.length} items`; $("#standardsBadge").classList.add('hidden'); return; }
+  if(currentIndex<0) currentIndex=0; if(currentIndex>=items.length) currentIndex=items.length-1;
+  const it=items[currentIndex];
+  $("#countBadge").textContent=`${currentIndex+1} of ${items.length}`;
+  $("#standardsBadge").textContent=(it.standards||[]).join(', '); $("#standardsBadge").classList.remove('hidden');
+
+  let html='';
+  if(activeKey==='prompts'){
+    const tips=it.scaffolds?.[difficulty]||defaultScaffold('prompts',difficulty);
+    const titleCat = currentCategory==='Any' ? `${it.__cat}` : currentCategory;
+    html=`<div class="kvs">
+      <div class="card"><h4>Category: ${titleCat}</h4><p>${safeWithTips(it.text)}</p></div>
+      <div class="card"><h4>${difficulty} — How to do it</h4><p>${safeWithTips(tips)}</p></div>
+    </div>${copyBlock('Writing Prompt — '+titleCat, it.text, it.standards)}${assignUI()}`;
+  } else if(activeKey==='cer'){
+    const scaff=it.scaffolds?.[difficulty]||defaultScaffold('cer',difficulty);
+    html=`<div class="card"><h4>Excerpt</h4><p style="font-style:italic">${safeWithTips(it.excerpt)}</p></div>
+      <div class="kvs mt12"><div class="card"><h4>Task</h4><p>${safeWithTips(it.prompt)}</p></div>
+      <div class="card"><h4>${difficulty} — How to do it</h4><p>${safeWithTips(scaff)}</p></div></div>
+      ${copyBlock('CER Micro-Analysis', it.prompt+"\\n\\nExcerpt:\\n"+it.excerpt, it.standards)}${assignUI()}`;
+  } else if(activeKey==='morphology'){
+    const scaff=defaultScaffold('morphology',difficulty);
+    html=`<div class="kvs"><div class="card"><h4>${it.kind.toUpperCase()}: ${it.form}</h4>
+      <p>Meaning: <strong>${safeWithTips(it.meaning)}</strong></p><p class="muted mt8">Examples: ${escapeHtml(it.examples.join(', '))}</p></div>
+      <div class="card"><h4>${difficulty} — How to do it</h4><p>${safeWithTips(scaff)}</p></div></div>
+      ${copyBlock('Morphology — '+it.form, '1) Build 4 words with '+it.form+'. Define + part of speech.\n2) Write a 3–4 sentence micro-story using ≥3.', it.standards)}${assignUI()}`;
+  } else if(activeKey==='sentences'){
+    const scaff=defaultScaffold('sentences',difficulty);
+    html=`<div class="kvs"><div class="card"><h4>Focus: ${it.focus}</h4><p class="muted">Kernels:</p><ul>${it.kernels.map(k=>`<li>${safeWithTips(k)}</li>`).join('')}</ul></div>
+      <div class="card"><h4>Mentor</h4><p style="font-style:italic">${safeWithTips(it.mentor)}</p><p class="mt8"><strong>${difficulty} — How to do it:</strong> ${safeWithTips(scaff)}</p></div></div>
+      ${copyBlock('Sentence Combining — '+it.focus, 'Combine the kernels into polished sentences. Then imitate: '+it.mentor, it.standards)}${assignUI()}`;
+  } else if(activeKey==='afterReading'){
+    const scaff=defaultScaffold('afterReading',difficulty);
+    html=`<div class="kvs"><div class="card"><h4>${it.title}</h4><p>${safeWithTips(it.directions)}</p></div>
+      <div class="card"><h4>${difficulty} — How to do it</h4><p>${safeWithTips(scaff)}</p></div></div>
+      ${copyBlock('After-Reading — '+it.title, it.directions, it.standards)}${assignUI()}`;
+  } else if(activeKey==='standby'){
+    const scaff=defaultScaffold('standby',difficulty);
+    html=`<div class="kvs"><div class="card"><h4>${it.title} <span class="pill" style="margin-left:8px">${it.tag||'Standby'}</span></h4><p>${safeWithTips(it.directions)}</p></div>
+      <div class="card"><h4>${difficulty} — How to do it</h4><p>${safeWithTips(scaff)}</p></div></div>
+      ${copyBlock('Standby — '+it.title, it.directions, it.standards)}${assignUI()}`;
+  }
+  $("#stationContent").innerHTML=html;
+  $("#difSeg").classList.toggle('hidden', !stationUsesDifficulty(activeKey));
+  syncTimerLabels();
+}
+function assignUI(){ return `<div class="mt16"><div class="controls"><button onclick="addCurrentToSet()">Add this to a Set…</button><button class="ghost" onclick="backHome()">Back to Home</button></div></div>`; }
+function renderListView(items){
+  const cards=items.map((it,idx)=>{
+    let title='Item', summary='';
+    if(activeKey==='prompts'){ title=(it.__cat||'Prompt'); summary=it.text; }
+    else if(activeKey==='cer'){ title=`${it.type} — CER`; summary=it.prompt+' | Excerpt: '+it.excerpt.slice(0,80)+'…'; }
+    else if(activeKey==='morphology'){ title=it.form; summary=it.meaning; }
+    else if(activeKey==='sentences'){ title=it.focus; summary='Mentor: '+it.mentor; }
+    else { title=it.title; summary=it.directions; }
+    return `<div class="miniCard"><strong>${escapeHtml(title)}</strong><div class="muted mt8">${escapeHtml(summary)}</div>
+      <div class="controls mt8"><button onclick="useListItem(${idx})">Open</button> <button onclick="addListItem(${idx})">Add to Set…</button></div></div>`;
+  }).join('');
+  return `<div class="scrollList">${cards}</div>`;
+}
+function useListItem(idx){ currentIndex=idx; listView=false; $("#btnListView").textContent='List View'; renderActiveItem(); }
+function addListItem(idx){ const items=visibleItems(); const it=items[idx]; if(savedSets.length===0){ showToast('Create a set first.'); return } const s=savedSets[0]; s.items.push({station:activeKey,id:it.id,difficulty}); store.set(SAVED_SETS_KEY,savedSets); showToast(`Added to set: ${s.name}`); }
+
+/* Navigation */
+function nextItem(){ currentIndex++; renderActiveItem(); }
+function prevItem(){ currentIndex--; renderActiveItem(); }
+function randomItem(){ const arr=visibleItems(); currentIndex=Math.floor(Math.random()*arr.length); renderActiveItem(); }
+function jumpTo(){ const val=parseInt($("#jumpInput").value||'1',10); currentIndex=Math.max(0,Math.min(visibleItems().length-1,val-1)); renderActiveItem(); }
+function hideCurrentItem(){ const arr=visibleItems(); if(!arr.length) return; hiddenIds.add(arr[currentIndex].id); store.set(HIDDEN_KEY, Array.from(hiddenIds)); showToast('Item hidden'); nextItem(); }
+function setDifficulty(d){ difficulty=d; $$("#difSeg button").forEach(b=>b.classList.remove('active')); if(d==='Support') $("#difSupport").classList.add('active'); if(d==='Core') $("#difCore").classList.add('active'); if(d==='Challenge') $("#difChallenge").classList.add('active'); if(!listView) renderActiveItem(); }
+function toggleListView(){ listView=!listView; $("#btnListView").textContent=listView?'Single View':'List View'; renderActiveItem(); }
+
+/* Create/Save Sets */
+function openCreateSet(){
+  const allowed=Object.keys(STATIONS); const pick=$("#setStationPick"); pick.innerHTML='';
+  allowed.forEach(k=>{ const span=document.createElement('span'); span.className='pill'; span.innerHTML=`<label class="inline"><input id="chk_${k}" type="checkbox" checked> ${STATIONS[k].name}</label>`; pick.appendChild(span); });
+  $("#setName").value=''; $("#setCount").value=6; openModal('modalCreateSet');
+
+  const toggleRow=()=>{ const on = $("#chk_prompts")?.checked; $("#setPromptCatRow").classList.toggle('hidden', !on); };
+  pick.querySelectorAll('input[type=checkbox]').forEach(cb=>addEventListener.call(cb,'change',toggleRow));
+  toggleRow();
+
+  const sel=$("#setPromptsCategory"); sel.innerHTML='';
+  ['Any', ...Object.keys(BANKS.prompts)].forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+  sel.value='Any';
+}
+function visibleFromPromptsForCategory(cat){
+  const arr=[];
+  const cats = cat==='Any' ? Object.keys(BANKS.prompts) : [cat];
+  cats.forEach(c=>{ for(const it of (BANKS.prompts[c]||[])) arr.push({...it,__cat:c}); });
+  return arr;
+}
+function createSetNow(){
+  const name=$("#setName").value.trim()||'Untitled Set';
+  const count=Math.max(1,Math.min(24,parseInt($("#setCount").value||'6',10)));
+  const allowDup=$("#allowDuplicates").checked;
+  const chosen=Object.keys(STATIONS).filter(k=>$("#chk_"+k)?.checked);
+  if(chosen.length===0){ showToast('Select at least one station'); return }
+
+  const promptCat = ($("#setPromptsCategory")?.value)||'Any';
+
+  const filtered=chosen.map(k=>{
+    if(k==='prompts'){
+      const source = visibleFromPromptsForCategory(promptCat);
+      return {k,arr:source.filter(it=>matchesStandards(it.standards,Array.from(stdFilter)))};
+    }else{
+      const source = BANKS[k]||[];
+      return {k,arr:source.filter(it=>matchesStandards(it.standards,Array.from(stdFilter)))};
+    }
+  });
+
+  const picks=[]; let i=0;
+  while(picks.length<count && i<1200){
+    const entry=filtered[i%filtered.length];
+    if(entry.arr.length){
+      const it=entry.arr[Math.floor(Math.random()*entry.arr.length)];
+      if(allowDup || !picks.some(p=>p.id===it.id)) picks.push({station:entry.k,id:it.id,difficulty:settings.defaultDifficulty});
+    }
+    i++;
+  }
+  const set={id:uid(),name,createdAt:Date.now(),items:picks,priorityIndex:null,includeStd:settings.includeStd,chime:settings.chime,timerMinutes:15};
+  savedSets.unshift(set); store.set(SAVED_SETS_KEY,savedSets); closeModal('modalCreateSet'); openSavedSets(); showToast('Set created');
+}
+function openSavedSets(){
+  const list=$("#savedSetsList"), scroll=$("#savedSetsListScroll"); list.innerHTML=''; scroll.innerHTML='';
+  if(savedSets.length===0){ list.innerHTML='<p class="muted">No saved sets yet.</p>'; }
+  savedSets.forEach(set=>{
+    const div=document.createElement('div'); div.className='card'; const date=new Date(set.createdAt).toLocaleString();
+    const itemsHtml=set.items.map((it,i)=>{ const label=stationLabel(it); const prio=(set.priorityIndex===i)?` <span class="pill" style="background:rgba(52,211,153,.2)">PRIORITY</span>`:''; return `<li>#${i+1}: <strong>${STATIONS[it.station].name}</strong> — ${escapeHtml(label)}${prio}<div class="controls mt8"><button onclick="replaceItemInSet('${set.id}',${i})">Replace</button><button onclick="markPriority('${set.id}',${i})">Mark Priority</button><button class="ghost" onclick="openItemManually('${set.id}',${i})">Open</button></div></li>`; }).join('');
+    div.innerHTML=`<h4>${escapeHtml(set.name)}</h4><p class="muted">Created: ${date} • Items: ${set.items.length}</p><ul>${itemsHtml}</ul><div class="controls mt12"><button onclick="projectSet('${set.id}')">Project Mode</button><button onclick="deleteSet('${set.id}')" class="ghost">Delete</button></div>`; list.appendChild(div);
+    const sdiv=document.createElement('div'); sdiv.className='miniCard'; sdiv.innerHTML=`<strong>${escapeHtml(set.name)}</strong> <span class="muted">(${set.items.length} items)</span><div class="controls mt8"><button onclick="projectSet('${set.id}')">Open</button> <button onclick="deleteSet('${set.id}')" class="ghost">Delete</button></div>`; scroll.appendChild(sdiv);
+  });
+  openModal('modalSavedSets');
+  $("#importSets").onchange=(e)=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ try{ const arr=JSON.parse(r.result); if(Array.isArray(arr)){ savedSets=arr.concat(savedSets); store.set(SAVED_SETS_KEY,savedSets); openSavedSets(); showToast('Sets imported'); } }catch{ showToast('Invalid JSON'); } }; r.readAsText(f); };
+}
+function toggleSavedSetsList(){ $("#savedSetsListScroll").classList.toggle('hidden'); $("#savedSetsList").classList.toggle('hidden'); $("#toggleSetList").textContent=$("#savedSetsListScroll").classList.contains('hidden')?'Scrollable List View':'Card View'; }
+function stationLabel(it){ if(it.station==='prompts'){ const arr=visibleFromPromptsForCategory('Any'); const f=arr.find(x=>x.id===it.id); return f?`${f.__cat}: ${f.text.slice(0,60)}…`:'(missing)'; } const bank=BANKS[it.station]; const f=bank.find(x=>x.id===it.id); if(!f) return '(missing)'; if(it.station==='cer') return `${f.type} — ${f.prompt.slice(0,60)}…`; if(it.station==='morphology') return `${f.form} — ${f.meaning}`; if(it.station==='sentences') return f.focus; return f.title||'(item)'; }
+function replaceItemInSet(setId,index){ const s=savedSets.find(x=>x.id===setId); if(!s)return; const stKey=s.items[index].station; let arr=[]; if(stKey==='prompts'){ arr=visibleFromPromptsForCategory('Any'); } else { arr=(BANKS[stKey]||[]).filter(it=>!hiddenIds.has(it.id)); } if(!arr.length){ showToast('No items available'); return } const pick=arr[Math.floor(Math.random()*arr.length)]; s.items[index]={station:stKey,id:pick.id,difficulty:settings.defaultDifficulty}; store.set(SAVED_SETS_KEY,savedSets); openSavedSets(); showToast('Item replaced'); }
+function markPriority(setId,idx){ const s=savedSets.find(x=>x.id===setId); if(!s)return; s.priorityIndex=idx; store.set(SAVED_SETS_KEY,savedSets); openSavedSets(); }
+function openItemManually(setId,idx){ const s=savedSets.find(x=>x.id===setId); const e=s.items[idx]; openView(e.station); const arr=visibleItems(); const pos=arr.findIndex(x=>x.id===e.id); if(pos>=0){ currentIndex=pos; renderActiveItem(); } }
+function addCurrentToSet(){ if(!activeKey) return; const items=visibleItems(); const it=items[currentIndex]; if(savedSets.length===0){ showToast('Create a set first.'); return } const s=savedSets[0]; s.items.push({station:activeKey,id:it.id,difficulty}); store.set(SAVED_SETS_KEY,savedSets); showToast(`Added to set: ${s.name}`); }
+function exportSavedSets(){ const blob=new Blob([JSON.stringify(savedSets,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='station-studio-sets.json'; a.click(); }
+function deleteSet(id){ savedSets=savedSets.filter(s=>s.id!==id); store.set(SAVED_SETS_KEY,savedSets); openSavedSets(); }
+function projectSet(id){ const s=savedSets.find(x=>x.id===id); if(!s) return; closeModal('modalSavedSets'); const seq=s.items.slice(); let seqIndex=0; function openSeq(){ const entry=seq[seqIndex]; openView(entry.station); const arr=visibleItems(); const pos=arr.findIndex(x=>x.id===entry.id); if(pos>=0){ currentIndex=pos; renderActiveItem(); } nextItem=function(){ seqIndex=Math.min(seq.length-1,seqIndex+1); openSeq(); }; prevItem=function(){ seqIndex=Math.max(0,seqIndex-1); openSeq(); }; } openSeq(); }
+
+/* My Stations & Edit */
+function openMyStations(){
+  const sel=$("#myCategory"); sel.innerHTML=''; Object.keys(STATIONS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=STATIONS[k].name; sel.appendChild(o); });
+  $("#myTitle").value=''; $("#myTime").value=15; $("#myDirections").value=''; $("#myDiffNotes").value='';
+  $("#myStdChips").innerHTML=''; openModal('modalMyStations'); renderMyStationsList();
+  $("#uploadMyStations").onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const arr=JSON.parse(r.result); if(Array.isArray(arr)){ myStations=arr; store.set(MINE_KEY,myStations); renderMyStationsList(); showToast('Imported My Stations'); } }catch{ showToast('Invalid JSON'); } }; r.readAsText(f); };
+}
+function saveMyStation(){
+  const title=$("#myTitle").value.trim(); const category=$("#myCategory").value; const time=parseInt($("#myTime").value||'15',10);
+  const directions=$("#myDirections").value.trim(); if(!title||!directions){ showToast('Title and directions required'); return }
+  const stds=Array.from($("#myStdChips").querySelectorAll('.pill')).map(p=>p.getAttribute('data-code'));
+  myStations.unshift({id:uid(),title,category,time,directions,standards:stds,notes:$("#myDiffNotes").value.trim()}); store.set(MINE_KEY,myStations); renderMyStationsList(); showToast('Added to My Stations');
+  $("#myTitle").value=''; $("#myDirections").value=''; $("#myStdChips").innerHTML='';
+}
+$("#myStdInput")?.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const code=e.target.value.trim().toUpperCase(); if(!code) return; if(findStd(code)){ addMyStdChip(code); e.target.value=''; } }});
+function findStd(code){ for(const dom of Object.keys(CCSS)){ if(CCSS[dom][code]) return true; } return false; }
+function addMyStdChip(code){ const chip=document.createElement('span'); chip.className='pill'; chip.setAttribute('data-code',code); chip.innerHTML=`${code} <button class="ghost" onclick="this.parentElement.remove()">✕</button>`; $("#myStdChips").appendChild(chip); }
+function renderMyStationsList(){
+  const list=$("#myStationsList"); list.innerHTML='';
+  if(myStations.length===0){ list.innerHTML='<p class="muted">No custom stations yet.</p>'; return }
+  myStations.forEach(m=>{
+    const div=document.createElement('div'); div.className='card';
+    const stn=STATIONS[m.category]?.name || m.category;
+    div.innerHTML=`<h4>${escapeHtml(m.title)} <span class="pill" style="margin-left:6px">${escapeHtml(stn)}</span></h4>
+      <p class="muted">Standards: ${(m.standards||[]).join(', ')||'—'}</p><p class="mt8">${escapeHtml(m.directions)}</p>
+      <div class="controls mt8"><button onclick="useMyStation('${m.id}')">Open</button> <button class="ghost" onclick="deleteMyStation('${m.id}')">Delete</button></div>`;
+    list.appendChild(div);
+  });
+}
+function useMyStation(id){
+  const m=myStations.find(x=>x.id===id); if(!m) return;
+  $("#home").classList.add('hidden'); $("#viewPanel").classList.remove('hidden');
+  activeKey=m.category; $("#viewTitle").textContent=(STATIONS[m.category]?.name||'My Station')+' — Custom';
+  $("#countBadge").textContent='Custom'; $("#standardsBadge").textContent=(m.standards||[]).join(', '); $("#standardsBadge").classList.remove('hidden');
+  $("#categoryWrap").classList.add('hidden');
+  $("#stationContent").innerHTML=`<div class="card"><h4>${escapeHtml(m.title)}</h4><p>${safeWithTips(m.directions)}</p>${m.notes?`<p class="mt8 muted"><em>Notes:</em> ${safeWithTips(m.notes)}</p>`:''}</div>${copyBlock(m.title, m.directions, m.standards)}${assignUI()}`;
+}
+function deleteMyStation(id){ myStations=myStations.filter(x=>x.id!==id); store.set(MINE_KEY,myStations); renderMyStationsList(); }
+function downloadMyStations(){ const blob=new Blob([JSON.stringify(myStations,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='my-stations.json'; a.click(); }
+
+function openEditModal(){
+  if(!activeKey){ showToast('Open a station first.'); return }
+  const items=visibleItems(); if(!items.length){ showToast('No item to edit.'); return }
+  const it=items[currentIndex]; const sel=$("#editCategory"); sel.innerHTML=''; Object.keys(STATIONS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=STATIONS[k].name; sel.appendChild(o); });
+  $("#editCategory").value=activeKey;
+  let title='Custom Station', main='', notes='', stds=(it.standards||[]).slice();
+  if(activeKey==='prompts'){ title='Writing Prompt — '+(it.__cat||''); main=it.text; notes=it.scaffolds?.[difficulty]||defaultScaffold('prompts',difficulty); }
+  else if(activeKey==='cer'){ title='CER Task'; main=`${it.prompt}\n\nExcerpt:\n${it.excerpt}`; notes=it.scaffolds?.[difficulty]||defaultScaffold('cer',difficulty); }
+  else if(activeKey==='morphology'){ title='Morphology — '+it.form; main=`Form: ${it.form}\nMeaning: ${it.meaning}\nExamples: ${it.examples.join(', ')}`; notes=defaultScaffold('morphology',difficulty); }
+  else if(activeKey==='sentences'){ title='Sentence Combining — '+it.focus; main=`Kernels: ${it.kernels.join(' | ')}\nMentor: ${it.mentor}`; notes=defaultScaffold('sentences',difficulty); }
+  else { title=it.title; main=it.directions; notes=defaultScaffold(activeKey,difficulty); }
+  $("#editTitle").value=title; $("#editMain").value=main; $("#editScaffold").value=notes; $("#editStdChips").innerHTML='';
+  stds.forEach(code=>addEditStdChip(code)); openModal('modalEditItem');
+  $("#editStdInput").onkeydown=(e)=>{ if(e.key==='Enter'){ const code=e.target.value.trim().toUpperCase(); if(!code) return; if(findStd(code)){ addEditStdChip(code); e.target.value=''; } } };
+}
+function addEditStdChip(code){ const chip=document.createElement('span'); chip.className='pill'; chip.setAttribute('data-code',code); chip.innerHTML=`${code} <button class="ghost" onclick="this.parentElement.remove()">✕</button>`; $("#editStdChips").appendChild(chip); }
+function saveEditedAsCustom(){
+  const title=$("#editTitle").value.trim(); const category=$("#editCategory").value; const directions=$("#editMain").value.trim();
+  const notes=$("#editScaffold").value.trim(); const stds=Array.from($("#editStdChips").querySelectorAll('.pill')).map(c=>c.getAttribute('data-code'));
+  if(!title||!directions){ showToast('Title and main text required'); return }
+  myStations.unshift({id:uid(), title, category, time:15, directions, standards:stds, notes}); store.set(MINE_KEY,myStations);
+  closeModal('modalEditItem'); showToast('Saved to My Stations');
+}
+
+/* Timer */
+let timerId=null, remaining=15*60, running=false;
+function fmt(sec){ const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return [h,m,s].map(x=>String(x).padStart(2,'0')).join(':'); }
+function syncTimerLabels(){ $("#timeLabel").textContent=fmt(remaining); $("#timeLabelModal").textContent=fmt(remaining); }
+function timerPreset(min){ remaining=min*60; syncTimerLabels(); }
+function timerCustom(fromModal){ const v=parseInt((fromModal?$("#timerCustomModal"):$("#timerCustom")).value||'0',10); if(v>0){ remaining=v*60; syncTimerLabels(); } }
+function timerStart(){ if(running) return; running=true; timerId=setInterval(()=>{ remaining--; syncTimerLabels(); if(remaining<=0){ clearInterval(timerId); running=false; remaining=0; syncTimerLabels(); if($("#chimeToggle").checked || $("#chimeToggleModal").checked) chime(); } },1000); }
+function timerPause(){ if(timerId){ clearInterval(timerId); running=false; } }
+function timerReset(){ timerPause(); remaining=15*60; syncTimerLabels(); }
+function chime(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine'; o.frequency.value=880; g.gain.value=0.001; o.start(); const now=ctx.currentTime; g.gain.exponentialRampToValueAtTime(0.2, now+0.01); g.gain.exponentialRampToValueAtTime(0.00001, now+1.2); o.stop(now+1.25); }catch(e){} }
+
+/* Data Packs: import/export/clear with de-dup & registry */
+function openPacks(){ $("#packInput").value=''; $("#packPreview").innerHTML=''; openModal('modalPacks'); }
+function previewPack(){
+  let data; try{ data=JSON.parse($("#packInput").value) }catch{ showToast('Invalid JSON'); return }
+  const res = summarizePack(data);
+  $("#packPreview").innerHTML = `<div class="card"><strong>Preview:</strong> ${res.summary}</div>
+    <div class="mt8 controls"><button class="primary" onclick='importPack(JSON.parse(document.getElementById("packInput").value))'>Import Now</button></div>`;
+}
+function downloadBank(){ const blob=new Blob([JSON.stringify(BANKS,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='station-studio-banks.json'; a.click(); }
+function clearPrompts(){ if(!confirm('Clear all prompts?')) return; Object.keys(BANKS.prompts).forEach(c=>BANKS.prompts[c]=[]); store.set(BANK_KEY,BANKS); showToast('Prompts cleared'); }
+function clearAllBanks(){ if(!confirm('Clear ALL banks?')) return; BANKS={prompts:{ Narrative:[], Argument:[], "Informative/Explanatory":[], "Poetry/Description":[], "Real-World/SEL":[], "Creative/Speculative":[] }, cer:[], morphology:[], sentences:[], afterReading:[], standby:[]}; store.set(BANK_KEY,BANKS); showToast('All banks cleared'); }
+
+function importPack(pack){
+  const key = pack.seed ? `${pack.type}::${pack.seed}` : null;
+  if(key && importedPacks.has(key) && !pack.force){ showToast('Pack already imported (same type+seed).'); return }
+
+  const res = applyPack(pack);
+  store.set(BANK_KEY, BANKS);
+  if(key){ importedPacks.add(key); store.set(PACKS_KEY, Array.from(importedPacks)); }
+
+  // auto-clear textarea + preview
+  const ta=$("#packInput"); const pv=$("#packPreview");
+  if(ta){ ta.value=''; } if(pv){ pv.innerHTML='<div class="card"><strong>Imported:</strong> '+res.summary+'</div>'; }
+
+  showToast(res.summary);
+}
+
+/* Preview/Summary without mutating */
+function summarizePack(pack){
+  const n = pack.count || (pack.perCategory ? (pack.perCategory*(pack.categories?.length||0)) : 0);
+  if(pack.type==='prompts_generated'){
+    const cats=pack.categories||[]; const per=pack.perCategory||25;
+    return {summary:`Will add up to ${cats.length*per} prompts (${per} per ${cats.length} categories). Duplicates skipped.`};
+  }
+  return {summary:`Will add up to ${n} item(s).`};
+}
+
+/* Apply pack with de-dup & deterministic generators */
+function importSummary(added, skipped, label){ return `Imported ${added} ${label}${skipped?`, skipped ${skipped} duplicate(s)`:''}.`; }
+
+function applyPack(pack){
+  if(pack.type==='prompts_generated'){
+    const cats=pack.categories, per=pack.perCategory||25, seed=pack.seed||'seed';
+    let added=0, skipped=0;
+    cats.forEach(cat=>{
+      const existing=new Set((BANKS.prompts[cat]||[]).map(x=>x.text.trim()));
+      let i=0, tries=0, toAdd=per;
+      while(i<toAdd && tries<per*40){
+        const item = generatePromptOne(cat, seed+':'+cat+':'+i+':'+tries);
+        const t=item.text.trim();
+        if(!existing.has(t)){
+          BANKS.prompts[cat]=BANKS.prompts[cat]||[];
+          BANKS.prompts[cat].push(item);
+          existing.add(t);
+          added++;
+          i++;
+        } else { skipped++; }
+        tries++;
+      }
+    });
+    return {summary: importSummary(added, skipped, 'prompt(s)')};
+  }
+  if(pack.type==='cer_generated'){
+    const n=pack.count||100, seed=pack.seed||'cer';
+    const existing=new Set(BANKS.cer.map(x=>(x.prompt+'||'+x.excerpt).trim()));
+    let added=0, skipped=0;
+    for(let i=0;i<n;i++){
+      const item=generateCEROne(seed+':'+i);
+      const key=(item.prompt+'||'+item.excerpt).trim();
+      if(!existing.has(key)){ BANKS.cer.push(item); existing.add(key); added++; } else skipped++;
+    }
+    return {summary: importSummary(added, skipped, 'CER item(s)')};
+  }
+  if(pack.type==='sentences_generated'){
+    const n=pack.count||100, seed=pack.seed||'sent';
+    const existing=new Set(BANKS.sentences.map(x=>(x.focus+'||'+x.mentor+'||'+x.kernels.join('|')).trim()));
+    let added=0, skipped=0;
+    for(let i=0;i<n;i++){
+      const item=generateSentenceOne(seed+':'+i);
+      const key=(item.focus+'||'+item.mentor+'||'+item.kernels.join('|')).trim();
+      if(!existing.has(key)){ BANKS.sentences.push(item); existing.add(key); added++; } else skipped++;
+    }
+    return {summary: importSummary(added, skipped, 'sentence item(s)')};
+  }
+  if(pack.type==='after_generated'){
+    const n=pack.count||100, seed=pack.seed||'after';
+    const existing=new Set(BANKS.afterReading.map(x=>x.title+'||'+x.directions));
+    let added=0, skipped=0;
+    for(let i=0;i<n;i++){
+      const item=generateAfterOne(seed+':'+i);
+      const key=item.title+'||'+item.directions;
+      if(!existing.has(key)){ BANKS.afterReading.push(item); existing.add(key); added++; } else skipped++;
+    }
+    return {summary: importSummary(added, skipped, 'after-reading item(s)')};
+  }
+  if(pack.type==='standby_generated'){
+    const n=pack.count||100, seed=pack.seed||'standby';
+    const existing=new Set(BANKS.standby.map(x=>x.title.trim()));
+    let added=0, skipped=0;
+    for(let i=0;i<n;i++){
+      const item=generateStandbyOne(seed+':'+i);
+      if(!existing.has(item.title.trim())){ BANKS.standby.push(item); existing.add(item.title.trim()); added++; } else skipped++;
+    }
+    return {summary: importSummary(added, skipped, 'standby item(s)')};
+  }
+  if(pack.type==='morph_generated'){
+    const n=pack.count||100, seed=pack.seed||'morph';
+    const pool = morphPool();
+    const existing=new Set(BANKS.morphology.map(x=>(x.kind+'||'+x.form).trim()));
+    let added=0, skipped=0;
+    const r = mulberry32(hash(seed));
+    for(let i=0;i<n;i++){
+      const pick = pool[Math.floor(r()*pool.length)];
+      const key=(pick.kind+'||'+pick.form).trim();
+      if(!existing.has(key)){ BANKS.morphology.push({...pick, id:uid()}); existing.add(key); added++; } else skipped++;
+    }
+    return {summary: importSummary(added, skipped, 'morphology item(s)')};
+  }
+  return {summary:'Unknown pack type.'};
+}
+
+/* Generators (deterministic) */
+function mulberry32(a){ return function(){ let t=a+=0x6D2B79F5; t=Math.imul(t^t>>>15, t|1); t^=t+Math.imul(t^t>>>7, t|61); return ((t^t>>>14)>>>0)/4294967296; } }
+function hash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
+function pick(r, arr){ return arr[Math.floor(r()*arr.length)] }
+
+/* Prompts */
+function generatePromptOne(category, seed){
+  const pools = {
+    Narrative:{
+      frames:[
+        "Write a scene where {event} forces a choice between {a} and {b}. Show the turning point and the outcome.",
+        "Tell a story of {object} changing hands {n} times. Focus on one key decision.",
+        "A misunderstanding about {misunderstanding} leads to a consequence. Show how the character fixes it.",
+        "Describe a school day after {ruleChange}. Show one moment that changes the plan.",
+        "Write a then/now memory linked by {motif}. Make the connection clear.",
+        "A rumor spreads in {place}. Show how pacing builds tension to the reveal.",
+        "You discover {smallFind}. Write the moment you decide what to do with it."
+      ],
+      vars:{ event:["a power outage","a rumor","a schedule change","a lost pass","a fire drill","a blizzard warning","a viral post"], a:["loyalty","comfort","truth","privacy","safety"], b:["popularity","risk","kindness","rules","curiosity"], object:["a key","a note","a bracelet","a sketchbook","a library card","a USB drive"], n:["three","four","five"], misunderstanding:["a text message","a nod","an email subject","a group chat","a hallway glance"], ruleChange:["device-free lunch","a no-talk challenge","a teacher swap day","one-way hallways","random seating"], motif:["a color","a sound","an image","a repeated phrase"], place:["the cafeteria","the bus","the library","the gym","the auditorium"], smallFind:["a lost flash drive","a folded map","a locker combination","a signed photo"] },
+      standards:['W.7.3','W.7.4']
+    },
+    Argument:{
+      frames:[
+        "Should {topic} be required at school? Write for {audience}. Include one counterclaim and your reply.",
+        "Argue for a fair policy on {topic}. Give two reasons with specific examples.",
+        "Explain why {change} would improve learning in an op-ed. End with a clear call to action.",
+        "Respond to the claim that {claim}. Use evidence and logic.",
+        "Which is better for learning: {optA} or {optB}? Defend your choice with reasons and examples."
+      ],
+      vars:{ topic:["device-free lunches","homework caps","later start times","AI brainstorming","retakes","clubs for credit"], audience:["students and staff","families","the school board"], change:["flex blocks","reading sprints","computer-free Fridays","outdoor study time"], claim:["homework doesn’t matter","phones always distract","group work is unfair","grades decide everything"], optA:["paper notes"], optB:["digital notes"] },
+      standards:['W.7.1','W.7.4']
+    },
+    "Informative/Explanatory":{
+      frames:[
+        "Explain how {habit} can compound over a semester. Use at least one example.",
+        "Teach a 5th grader how to {skill}. Write clear steps and a model.",
+        "Explain the role of {element} in a character’s choice. Use details from a text you know.",
+        "Break down how {strategy} works. Explain when to use it.",
+        "Compare two reliable sources on {topic}. Explain which is stronger and why."
+      ],
+      vars:{ habit:["daily reading","a sleep schedule","micro-notes","water tracking","planner checks"], skill:["spot bias","summarize a chapter","compare two arguments","identify reliable sources","cite properly"], element:["setting","point of view","structure","symbolism"], strategy:["spaced practice","retrieval practice","interleaving","dual coding"], topic:["teen health","study habits","school policies","energy drinks"] },
+      standards:['W.7.2','W.7.4']
+    },
+    "Poetry/Description":{
+      frames:[
+        "Write a free-verse poem personifying {object} during a busy week.",
+        "Describe a place using only {sense} details (no visuals).",
+        "Write a “then vs. now” double stanza about {topic}.",
+        "Write a description where {figurative} sets the mood.",
+        "Write a poem that circles back to its first line after a time shift."
+      ],
+      vars:{ object:["a locker","a bus seat","a pencil","the auditorium","a gym floor","a hallway clock"], sense:["sound","smell","touch","taste"], topic:["your mornings","lunchtime","practice","the walk to class","after-school jobs"], figurative:["an extended metaphor","repetition","alliteration","contrasting images"] },
+      standards:['W.7.3','RL.7.4','L.7.5']
+    },
+    "Real-World/SEL":{
+      frames:[
+        "Draft a polite email asking {adult} for help about {problem}. Use a clear subject and sign-off.",
+        "Explain how to resolve {conflict} productively. Give steps and a script.",
+        "Write a quick guide to build {habit} in two weeks. Include checkpoints.",
+        "Write directions for a group to run a {meeting} in 10 minutes with roles."
+      ],
+      vars:{ adult:["a teacher","a coach","a counselor","a librarian"], problem:["missing work","confusing directions","group tension","study stress"], conflict:["a group conflict","a scheduling issue","a miscommunication"], habit:["hydration","planner usage","reading stamina","study blocks"], meeting:["plan-check"], },
+      standards:['W.7.2','SL.7.1']
+    },
+    "Creative/Speculative":{
+      frames:[
+        "Time pauses for everyone but you—only when {trigger}. Describe one school day.",
+        "You find a note in your handwriting dated {years} years ahead. Write the moment you open it.",
+        "Every mirror shows a different you. Tell one incident that reveals a truth.",
+        "The school adopts {wildChange}. Describe one surprising outcome.",
+        "An elevator stops at a floor that isn’t there. Write what happens when the doors open."
+      ],
+      vars:{ trigger:["you sneeze","you blink twice","you hear your name","you stand still"], years:["10","20","30"], wildChange:["silent hallways","floating desks","AI homeroom mentors","color-coded doors","outdoor classrooms"] },
+      standards:['W.7.3','L.7.5']
+    }
+  };
+  const r = mulberry32(hash(seed));
+  const P = pools[category];
+  const f = pick(r, P.frames);
+  const v = P.vars;
+  const text = f.replace('{event}',pick(r,v.event||['an event']))
+    .replace('{a}',pick(r,v.a||['A'])).replace('{b}',pick(r,v.b||['B']))
+    .replace('{object}',pick(r,v.object||['an object'])).replace('{n}',pick(r,v.n||['three']))
+    .replace('{misunderstanding}',pick(r,v.misunderstanding||['a message']))
+    .replace('{ruleChange}',pick(r,v.ruleChange||['a change']))
+    .replace('{motif}',pick(r,v.motif||['an image']))
+    .replace('{place}',pick(r,v.place||['school']))
+    .replace('{smallFind}',pick(r,v.smallFind||['an item']))
+    .replace('{topic}',pick(r,v.topic||['a topic']))
+    .replace('{audience}',pick(r,v.audience||['an audience']))
+    .replace('{change}',pick(r,v.change||['a change']))
+    .replace('{claim}',pick(r,v.claim||['a claim']))
+    .replace('{optA}',pick(r,v.optA||['A']))
+    .replace('{optB}',pick(r,v.optB||['B']))
+    .replace('{habit}',pick(r,v.habit||['a habit']))
+    .replace('{skill}',pick(r,v.skill||['a skill']))
+    .replace('{element}',pick(r,v.element||['setting']))
+    .replace('{strategy}',pick(r,v.strategy||['a strategy']))
+    .replace('{sense}',pick(r,v.sense||['sound']))
+    .replace('{figurative}',pick(r,v.figurative||['metaphor']))
+    .replace('{adult}',pick(r,v.adult||['an adult']))
+    .replace('{problem}',pick(r,v.problem||['a problem']))
+    .replace('{conflict}',pick(r,v.conflict||['a conflict']))
+    .replace('{meeting}',pick(r,v.meeting||['a meeting']))
+    .replace('{trigger}',pick(r,v.trigger||['X']))
+    .replace('{years}',pick(r,v.years||['20']))
+    .replace('{wildChange}',pick(r,v.wildChange||['a change']));
+  const scaffolds = {
+    Support: defaultScaffold('prompts','Support'),
+    Core: defaultScaffold('prompts','Core'),
+    Challenge: defaultScaffold('prompts','Challenge')
+  };
+  return { id:uid(), text, standards:P.standards.slice(), scaffolds };
+}
+
+/* CER */
+function generateCEROne(seed){
+  const r = mulberry32(hash(seed));
+  const RL_images=[
+    "The hallway clock hiccuped between seconds.",
+    "Dust drifted in the gym lights like slow snow.",
+    "Lockers yawned open and shut, a metallic tide.",
+    "Rain stippled the windows; the room smelled like wet paper.",
+    "A crumpled flyer clung to the door, its ink running.",
+    "Backpacks formed a wall along the floor.",
+    "The stage curtain breathed with the air vent.",
+    "Shoes squeaked, then silence stretched thin.",
+    "The intercom clicked on and waited.",
+    "A pencil rolled to the edge and stopped.",
+    "The bus windows filmed with fog and names.",
+    "Light pooled on the page like a small lake.",
+    "Hood strings swung as he stalled for time.",
+    "Her palms left half moons on the notebook.",
+    "A whistle’s echo bounced between rafters.",
+    "The cafeteria buzz flattened to a hum.",
+    "Rain stitched steady lines down the glass.",
+    "A shadow touched the trophy case.",
+    "Chairs scraped like a shuffled deck.",
+    "The clock’s second hand lagged then leapt."
+  ];
+  const RL_prompts=[
+    "How does imagery build the text’s mood? Write one CER paragraph with two short quotes.",
+    "How does the setting influence a character’s decision? Write one CER paragraph.",
+    "How does a specific word or phrase shape the tone? Write one CER paragraph.",
+    "How does a symbol contribute to a theme? Write one CER paragraph.",
+    "How does a change in pacing affect tension? Write one CER paragraph.",
+    "How does dialogue reveal a character trait? Write one CER paragraph."
+  ];
+  const RI_facts=[
+    "A spaced-practice schedule produced higher quiz retention than a cram session in two classes.",
+    "Students who read 20 minutes daily added ~1.8 million words of exposure in a year.",
+    "A student news site with dates, authors, and links earned a credibility score of 4/5.",
+    "A school garden increased pollinators by 30% in one season, according to weekly counts.",
+    "A late-start pilot cut tardies by 18% over six weeks.",
+    "Peer feedback with a checklist reduced revision time by 25% on average.",
+    "Noise levels above 70 dB lowered focus in a library study zone.",
+    "A nutrition change (water access) correlated with fewer afternoon nurse visits.",
+    "A bus-tracking app reduced parent calls by 40% during storms.",
+    "QR code sign-ins cut line time by half at club fairs."
+  ];
+  const RI_prompts=[
+    "What is the central idea and which detail best supports it? Write one CER paragraph.",
+    "Which text feature or statistic best supports the author’s claim, and why? Write one CER paragraph.",
+    "How does one statistic support the main idea? Explain with CER.",
+    "Which piece of evidence is strongest, and why? Write one CER paragraph."
+  ];
+  const kind = pick(r,['RL','RI']);
+  if(kind==='RL'){
+    const excerpt = pick(r, RL_images);
+    const prompt = pick(r, RL_prompts);
+    return { id:uid(), type:'RL', excerpt, prompt, standards:['RL.7.1','RL.7.2','W.7.9'],
+      scaffolds:{Support:defaultScaffold('cer','Support'), Core:defaultScaffold('cer','Core'), Challenge:defaultScaffold('cer','Challenge')} };
+  } else {
+    const excerpt = pick(r, RI_facts);
+    const prompt = pick(r, RI_prompts);
+    return { id:uid(), type:'RI', excerpt, prompt, standards:['RI.7.1','RI.7.2','W.7.9'],
+      scaffolds:{Support:defaultScaffold('cer','Support'), Core:defaultScaffold('cer','Core'), Challenge:defaultScaffold('cer','Challenge')} };
+  }
+}
+
+/* Sentence combining */
+function generateSentenceOne(seed){
+  const r = mulberry32(hash(seed));
+  const focuses=['Subordination','Appositive','Nonrestrictive Clause','Parallel Structure','Absolute Phrase','Compound-Complex','Introductory Phrase','Series with Modifiers','Em-Dash Appositive','Colon for Explanation'];
+  const pairKernels=[
+    ['I finished my paragraph.','The bell rang.'],
+    ['The librarian smiled.','She handed me a thick book.'],
+    ['The meteor shower began.','We turned off the stadium lights.'],
+    ['I tied my shoes.','Coach started the timer.'],
+    ['The rain started.','We ran for the door.'],
+    ['He forgot his notes.','The presentation still went well.'],
+    ['The power flickered.','Screens rebooted.'],
+    ['She raised her hand.','The room quieted.'],
+    ['I opened the email.','I reread the subject line.'],
+    ['We reached the gate.','It was locked.']
+  ];
+  const tripleKernels=[
+    ['The team planned.','They practiced.','They presented.'],
+    ['The bus slowed.','The doors opened.','We stepped back.'],
+    ['I checked the list.','My name was missing.','I checked again.'],
+    ['We packed boxes.','We labeled them.','We stacked them.'],
+    ['The clock ticked.','The room warmed.','The class waited.']
+  ];
+  const mentors=[
+    'Although the bell rang, I finished my paragraph before standing.',
+    'The librarian, a patient guide, handed me a thick book.',
+    'The meteor shower, which we had waited for all week, began as we turned off the stadium lights.',
+    'We need to brainstorm, to draft, and to revise.',
+    'Hands shaking, I pressed the submit button.',
+    'I opened the email—then I read the subject again.',
+    'We brought the posters: bold, bright, and balanced.',
+    'The doors opened: our plan began.',
+    'My brother, the team captain, waved us forward.',
+    'Because we practiced, we presented with confidence.'
+  ];
+  const kernels = (r()<0.5) ? pick(r,pairKernels) : pick(r,tripleKernels);
+  const mentor = pick(r,mentors);
+  return { id:uid(), focus:pick(r,focuses), kernels, mentor, standards:['L.7.1','L.7.2','L.7.3'] };
+}
+
+/* After-reading */
+function generateAfterOne(seed){
+  const r = mulberry32(hash(seed));
+  const bases=[
+    {t:'Theme Tracker', s:['RL.7.2']},
+    {t:'POV Shift', s:['RL.7.6']},
+    {t:'Structure Snapshot', s:['RL.7.5','RI.7.5']},
+    {t:'Figurative Hunt', s:['RL.7.4','L.7.5']},
+    {t:'Objective Summary', s:['RL.7.2','RI.7.2']},
+    {t:'Vocabulary in Context', s:['L.7.4']},
+    {t:'Character Arc Map', s:['RL.7.3']},
+    {t:'Tone Check', s:['RL.7.4']},
+    {t:'Text Evidence Ladder', s:['RL.7.1','RI.7.1']},
+    {t:'Claim & Counter', s:['W.7.1','RI.7.8']},
+    {t:'Compare & Contrast', s:['RI.7.9','RL.7.9']},
+    {t:'Author’s Purpose', s:['RI.7.6']}
+  ];
+  const constraints=[
+    'Limit to 80–100 words.',
+    'Use one signal phrase (e.g., “According to the text, …”).',
+    'Underline one precise verb.',
+    'Use the Because-But-So frame once.',
+    'Include one short quote (≤8 words).',
+    'End with a one-sentence takeaway.',
+    'Use parallel structure once.',
+    'Include one appositive.',
+    'Start one sentence with an introductory phrase.'
+  ];
+  const b=pick(r,bases); const c1=pick(r,constraints), c2=pick(r,constraints);
+  const map={
+    'Theme Tracker':'Quote two moments that develop a theme. Explain in 3–4 sentences how the second moment deepens or shifts the theme.',
+    'POV Shift':'Rewrite a key moment from another character’s point of view (6–8 sentences). Add 1 sentence explaining how POV changes meaning.',
+    'Structure Snapshot':'Identify a section or scene. Explain in 3–4 sentences how it contributes to the whole text.',
+    'Figurative Hunt':'Find two examples of figurative language. Copy them and explain the effect on tone or mood (2–3 sentences).',
+    'Objective Summary':'Write a 4-sentence SWBST summary with no opinions.',
+    'Vocabulary in Context':'Choose one unfamiliar word. Infer the meaning from context, then verify. Explain how it shapes meaning.',
+    'Character Arc Map':'Identify two choices and their consequences. Explain how they reveal change.',
+    'Tone Check':'Choose two words that signal tone. Explain the effect.',
+    'Text Evidence Ladder':'Make a claim, then stack two pieces of evidence with reasoning.',
+    'Claim & Counter':'State the author’s claim, then a counterclaim, then reply briefly.',
+    'Compare & Contrast':'Compare two texts/scenes focusing on how structure shapes meaning.',
+    'Author’s Purpose':'Identify the author’s purpose and the best supporting detail.'
+  };
+  const directions = `${map[b.t]} ${c1} ${c2}`;
+  return { id:uid(), title:b.t, directions, standards:b.s };
+}
+
+/* Standby */
+function generateStandbyOne(seed){
+  const r = mulberry32(hash(seed));
+  const baseTitles=['Reading Craft Scavenger','Writer’s Toolbox','Evidence Collector','Quick Compare','Word Web','Mini-Presentation','Grammar Micro-Fix','Context Detective','Tone Swap','Dialogue Polish','Idea Elevator Pitch','Summary Remix','Headline Maker','Transition Tune-Up','Sentence Variety Drill'];
+  const addOns=['(fiction)','(nonfiction)','(poetry)','(any text)','(from your writing)'];
+  const title = `${pick(r,baseTitles)} ${pick(r,addOns)}`;
+  const tagMap={Reading:'Reading',Writing:'Writing',Vocab:'Vocab',SL:'SL',Grammar:'Grammar'};
+  const pool=[
+    {tag:'Reading',dir:'Find: (1) a vivid verb, (2) a simile or metaphor, (3) a complex sentence, (4) a context clue. Record page # and explain each (1–2 sentences).',stds:['RL.7.4','RL.7.1']},
+    {tag:'Writing',dir:'Revise any piece by adding 3 vivid verbs and 2 sensory details. Vary 3 sentences (opener, appositive, subordinator). Highlight changes.',stds:['L.7.1','L.7.3']},
+    {tag:'Reading',dir:'Gather 3 short quotes that support one inference about a character. Explain the connection (2–3 sentences).',stds:['RL.7.1']},
+    {tag:'Reading',dir:'Compare two texts/scenes (5–6 sentences) focusing on how structure shapes meaning.',stds:['RL.7.5','RI.7.5']},
+    {tag:'Vocab',dir:'Choose a root or prefix. Build a web of 6 related words. Define briefly and use 3 in a micro-story.',stds:['L.7.4','L.7.6']},
+    {tag:'SL',dir:'Prepare a 60-second share: claim → two supports → takeaway. Deliver to a partner or group.',stds:['SL.7.4']},
+    {tag:'Grammar',dir:'Add an appositive or nonrestrictive clause to 3 sentences from your writing. Punctuate and underline the changes.',stds:['L.7.2']},
+    {tag:'Vocab',dir:'Pick two new words. Infer meaning from context, then confirm with a resource. Write before/after meanings.',stds:['L.7.4']},
+    {tag:'Writing',dir:'Rewrite a paragraph to shift tone (e.g., anxious → confident). Identify 3 language choices that changed.',stds:['L.7.3']},
+    {tag:'Writing',dir:'Write a 10-line dialogue showing conflict with correct punctuation and stage directions. No narration.',stds:['W.7.3','L.7.2']},
+    {tag:'Writing',dir:'Create three headlines that capture the main idea of a passage; explain which is best and why.',stds:['RI.7.2']},
+    {tag:'Writing',dir:'Write a 5-sentence summary that removes all opinion. Underline signal words you used.',stds:['RI.7.2']},
+    {tag:'Writing',dir:'Fix transitions in a draft: add at least 3 transition words/phrases and explain each choice.',stds:['W.7.4']},
+    {tag:'Grammar',dir:'Vary 5 sentences: one appositive, one absolute, one subordination, one parallel series, one with a colon.',stds:['L.7.1','L.7.3']}
+  ];
+  const pickItem = pick(r,pool);
+  return { id:uid(), title, tag:tagMap[pickItem.tag], directions:pickItem.dir, standards:pickItem.stds };
+}
+
+/* Morphology pool */
+function morphPool(){
+  const E = [
+    {kind:'prefix',form:'anti-',meaning:'against',examples:['antifreeze','antibiotic','antisocial']},
+    {kind:'prefix',form:'auto-',meaning:'self',examples:['autograph','autocorrect','autobiography']},
+    {kind:'prefix',form:'bi-',meaning:'two',examples:['bicycle','bilingual','bimonthly']},
+    {kind:'prefix',form:'circum-',meaning:'around',examples:['circumference','circumnavigate','circumstance']},
+    {kind:'prefix',form:'co-/com-/con-',meaning:'together, with',examples:['cooperate','community','connect']},
+    {kind:'prefix',form:'de-',meaning:'down, away',examples:['devalue','descend','decompose']},
+    {kind:'prefix',form:'dis-',meaning:'not, opposite of',examples:['dislike','disagree','disappear']},
+    {kind:'prefix',form:'en-/em-',meaning:'cause to, put into',examples:['enable','embrace','empower']},
+    {kind:'prefix',form:'fore-',meaning:'before, front',examples:['forecast','foreword','forewarn']},
+    {kind:'prefix',form:'il-/im-/in-/ir-',meaning:'not',examples:['illegal','impossible','inactive']},
+    {kind:'prefix',form:'inter-',meaning:'between, among',examples:['interrupt','international','interact']},
+    {kind:'prefix',form:'mid-',meaning:'middle',examples:['midway','midterm','midpoint']},
+    {kind:'prefix',form:'mis-',meaning:'wrongly',examples:['misread','misplace','misjudge']},
+    {kind:'prefix',form:'mono-',meaning:'one',examples:['monologue','monorail','monochrome']},
+    {kind:'prefix',form:'non-',meaning:'not',examples:['nonsense','nonfiction','nonlinear']},
+    {kind:'prefix',form:'over-',meaning:'too much',examples:['overcook','overreact','overwork']},
+    {kind:'prefix',form:'post-',meaning:'after',examples:['postwar','postgame','postscript']},
+    {kind:'prefix',form:'pre-',meaning:'before',examples:['preview','preheat','pretest']},
+    {kind:'prefix',form:'re-',meaning:'again, back',examples:['rewrite','return','review']},
+    {kind:'prefix',form:'semi-',meaning:'half, partly',examples:['semicircle','semiannual','semisweet']},
+    {kind:'prefix',form:'sub-',meaning:'under, below',examples:['submerge','subway','subconscious']},
+    {kind:'prefix',form:'super-',meaning:'above',examples:['superhero','superimpose','superpower']},
+    {kind:'prefix',form:'trans-',meaning:'across, beyond',examples:['transport','transfer','transcontinental']},
+    {kind:'prefix',form:'tri-',meaning:'three',examples:['triangle','tricycle','trilogy']},
+    {kind:'prefix',form:'un-',meaning:'not',examples:['unknown','untidy','unfair']},
+    {kind:'prefix',form:'under-',meaning:'beneath, too little',examples:['undersea','underpay','underestimate']},
+    {kind:'prefix',form:'micro-',meaning:'small',examples:['microscope','microchip','microclimate']},
+    {kind:'prefix',form:'macro-',meaning:'large',examples:['macrocosm','macroeconomics','macrobiotic']},
+    {kind:'prefix',form:'tele-',meaning:'far',examples:['telephone','telegraph','telephoto']},
+    {kind:'prefix',form:'hyper-',meaning:'over, excessive',examples:['hyperactive','hypertension','hyperlink']},
+    {kind:'prefix',form:'hypo-',meaning:'under, below',examples:['hypothermia','hypodermic','hypothesis']},
+
+    {kind:'root',form:'aud',meaning:'hear',examples:['audio','audience','audible']},
+    {kind:'root',form:'bene',meaning:'good, well',examples:['benefit','benevolent','benediction']},
+    {kind:'root',form:'bio',meaning:'life',examples:['biology','biome','biography']},
+    {kind:'root',form:'chron',meaning:'time',examples:['chronology','synchronize','anachronism']},
+    {kind:'root',form:'cred',meaning:'believe',examples:['credible','credit','incredible']},
+    {kind:'root',form:'dict',meaning:'say, declare',examples:['dictate','predict','contradict']},
+    {kind:'root',form:'duc/duct',meaning:'lead',examples:['conduct','educate','introduce']},
+    {kind:'root',form:'geo',meaning:'earth',examples:['geology','geography','geode']},
+    {kind:'root',form:'graph',meaning:'write',examples:['autograph','paragraph','telegraph']},
+    {kind:'root',form:'ject',meaning:'throw',examples:['eject','project','injection']},
+    {kind:'root',form:'jur/jus',meaning:'law, justice',examples:['jury','justify','jurisdiction']},
+    {kind:'root',form:'log/logue',meaning:'word, study, speech',examples:['dialogue','logic','monologue']},
+    {kind:'root',form:'man',meaning:'hand',examples:['manual','manuscript','manufacture']},
+    {kind:'root',form:'meter/metr',meaning:'measure',examples:['thermometer','speedometer','diameter']},
+    {kind:'root',form:'min',meaning:'small, less',examples:['minimum','minor','minute']},
+    {kind:'root',form:'mit/miss',meaning:'send',examples:['submit','dismiss','transmit']},
+    {kind:'root',form:'mob/mot/mov',meaning:'move',examples:['mobile','motion','remove']},
+    {kind:'root',form:'ped',meaning:'foot',examples:['pedestrian','pedal','centipede']},
+    {kind:'root',form:'phon',meaning:'sound',examples:['telephone','phonics','symphony']},
+    {kind:'root',form:'photo',meaning:'light',examples:['photograph','photosynthesis','telephoto']},
+    {kind:'root',form:'port',meaning:'carry',examples:['transport','export','portable']},
+    {kind:'root',form:'rupt',meaning:'break',examples:['interrupt','rupture','bankrupt']},
+    {kind:'root',form:'scrib/script',meaning:'write',examples:['describe','manuscript','inscription']},
+    {kind:'root',form:'sect',meaning:'cut',examples:['dissect','section','insect']},
+    {kind:'root',form:'spec/spect',meaning:'look',examples:['inspect','spectator','prospect']},
+    {kind:'root',form:'struct',meaning:'build',examples:['construct','structure','instruct']},
+    {kind:'root',form:'tract',meaning:'pull, drag',examples:['tractor','attract','subtract']},
+    {kind:'root',form:'vid/vis',meaning:'see',examples:['video','vision','invisible']},
+    {kind:'root',form:'voc/voke',meaning:'call, voice',examples:['vocal','invoke','provoke']},
+    {kind:'root',form:'therm',meaning:'heat',examples:['thermal','thermostat','hypothermia']},
+    {kind:'root',form:'hydro',meaning:'water',examples:['hydroelectric','hydrate','hydraulic']},
+    {kind:'root',form:'psych',meaning:'mind',examples:['psychology','psychic','psyche']},
+    {kind:'root',form:'scope',meaning:'look, watch',examples:['telescope','microscope','periscope']},
+    {kind:'root',form:'cycle',meaning:'circle, wheel',examples:['bicycle','recycle','cyclical']},
+    {kind:'root',form:'astro',meaning:'star',examples:['astronomy','astronaut','asteroid']},
+    {kind:'root',form:'morph',meaning:'form, shape',examples:['morphology','metamorphosis','amorphous']},
+
+    {kind:'suffix',form:'-able/-ible',meaning:'capable of',examples:['reliable','edible','flexible']},
+    {kind:'suffix',form:'-age',meaning:'act, result of',examples:['baggage','breakage','postage']},
+    {kind:'suffix',form:'-al',meaning:'related to',examples:['personal','seasonal','natural']},
+    {kind:'suffix',form:'-ance/-ence',meaning:'state or quality of',examples:['performance','persistence','difference']},
+    {kind:'suffix',form:'-ary',meaning:'place for; related to',examples:['library','secretary','contrary']},
+    {kind:'suffix',form:'-er/-or',meaning:'one who',examples:['teacher','actor','runner']},
+    {kind:'suffix',form:'-est',meaning:'most',examples:['fastest','largest','highest']},
+    {kind:'suffix',form:'-ful',meaning:'full of',examples:['helpful','thoughtful','colorful']},
+    {kind:'suffix',form:'-hood',meaning:'state or condition',examples:['childhood','neighborhood','adulthood']},
+    {kind:'suffix',form:'-ic',meaning:'having to do with',examples:['historic','poetic','athletic']},
+    {kind:'suffix',form:'-ify/-fy',meaning:'make or become',examples:['clarify','magnify','simplify']},
+    {kind:'suffix',form:'-ion/-tion/-sion',meaning:'act or process',examples:['creation','admission','tension']},
+    {kind:'suffix',form:'-ish',meaning:'like, related to',examples:['childish','greenish','foolish']},
+    {kind:'suffix',form:'-ism',meaning:'belief or practice',examples:['realism','activism','tourism']},
+    {kind:'suffix',form:'-ist',meaning:'one who practices',examples:['artist','scientist','pianist']},
+    {kind:'suffix',form:'-ity/-ty',meaning:'state of',examples:['clarity','activity','community']},
+    {kind:'suffix',form:'-ive/-ative/-itive',meaning:'having the nature of',examples:['creative','talkative','sensitive']},
+    {kind:'suffix',form:'-less',meaning:'without',examples:['fearless','tireless','hopeless']},
+    {kind:'suffix',form:'-ly',meaning:'in the manner of',examples:['quickly','silently','brightly']},
+    {kind:'suffix',form:'-ment',meaning:'result/act of',examples:['achievement','movement','argument']},
+    {kind:'suffix',form:'-ness',meaning:'state, quality',examples:['kindness','darkness','happiness']},
+    {kind:'suffix',form:'-ology',meaning:'study of',examples:['biology','mythology','ecology']},
+    {kind:'suffix',form:'-ous/-eous/-ious',meaning:'full of',examples:['curious','nervous','courteous']},
+    {kind:'suffix',form:'-ship',meaning:'position held',examples:['friendship','leadership','ownership']},
+    {kind:'suffix',form:'-y',meaning:'characterized by',examples:['rainy','sporty','messy']}
+  ];
+  return E.map(x=>({...x,standards:['L.7.4','L.7.6']}));
+}
+
+/* Modals & Settings */
+function openModal(id){ $('#'+id).classList.add('active'); }
+function closeModal(id){ $('#'+id).classList.remove('active'); }
+function backdropClose(e){ if(e.target.classList.contains('modal')) e.currentTarget.classList.remove('active'); }
+window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ $$('.modal.active').forEach(m=>m.classList.remove('active')); }});
+function saveSettings(){ settings.defaultDifficulty=$('#defaultDifficulty').value; settings.includeStd=$('#defaultIncludeStd').value==='Yes'; settings.chime=$('#defaultChime').value==='On'; store.set(SETTINGS_KEY,settings); $('#chimeToggle').checked=settings.chime; $('#chimeToggleModal').checked=settings.chime; showToast('Settings saved'); }
+function initSettingsUI(){ $('#defaultDifficulty').value=settings.defaultDifficulty; $('#defaultIncludeStd').value=settings.includeStd?'Yes':'No'; $('#defaultChime').value=settings.chime?'On':'Off'; $('#chimeToggle').checked=settings.chime; $('#chimeToggleModal').checked=settings.chime; }
+
+/* Inject Settings modal */
+(function(){ const modal=document.createElement('div'); modal.id='modalSettings'; modal.className='modal'; modal.setAttribute('onclick','backdropClose(event)'); modal.innerHTML=`<div class="sheet"><div class="head"><strong>Settings</strong><button onclick="closeModal('modalSettings')">✕</button></div><div class="body"><div class="kvs"><div><label>Default difficulty</label><select id="defaultDifficulty"><option>Support</option><option selected>Core</option><option>Challenge</option></select></div><div><label>Include standards in copy by default</label><select id="defaultIncludeStd"><option>No</option><option>Yes</option></select></div><div><label>Timer chime default</label><select id="defaultChime"><option selected>On</option><option>Off</option></select></div></div><div class="mt12"><button class="primary" onclick="saveSettings()">Save</button></div></div></div>`; document.body.appendChild(modal); initSettingsUI(); })();
+
+/* Header actions */
+$("#btnCreateSet").onclick=openCreateSet;
+$("#btnSavedSets").onclick=openSavedSets;
+$("#btnMyStations").onclick=openMyStations;
+$("#btnStandards").onclick=openStandards;
+$("#btnTimer").onclick=()=>openModal('modalTimer');
+$("#btnSettings").onclick=()=>openModal('modalSettings');
+$("#btnDataPacks").onclick=openPacks;
+
+/* ====== Minimal self-tests (console) ====== */
+(function selfTests(){
+  // 1) No tooltip markup inside data-tip attribute
+  const html = safeWithTips("Add a motif and a time shift.");
+  const testDiv=document.createElement('div'); testDiv.innerHTML=html;
+  const t=testDiv.querySelector('.tip');
+  console.assert(t && !t.getAttribute('data-tip').includes('<span'), 'Tooltip should not contain HTML');
+
+  // 2) Braces remain and wrap correctly
+  const html2 = safeWithTips("Use {motif} in your scene.");
+  const d2=document.createElement('div'); d2.innerHTML=html2;
+  console.assert(d2.textContent.includes('{') && d2.querySelector('.tip'), 'Braces preserved and tooltip applied');
+
+  // 3) Attribute values not corrupted
+  const roundtrip = safeWithTips('Theme and motif connect.');
+  const testDiv2=document.createElement('div'); testDiv2.innerHTML=roundtrip;
+  testDiv2.querySelectorAll('.tip').forEach(s=>{
+    console.assert(!/span\s+class/.test(s.getAttribute('data-tip')), 'No span markup inside data-tip');
+  });
+})();
+
+/* Boot */
+function boot(){ renderHome(); syncTimerLabels(); }
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
